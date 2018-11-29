@@ -1,0 +1,993 @@
+#+TITLE: Emacs configuration file
+#+AUTHOR: Carlos Perez
+#+EMAIL: carlosperezmolano@gmail.com
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 24.3.1 (Org mode 8.3.2)
+# #+STARTUP: indent
+
+
+This is my Emacs configuration file written in org-mode. You can take a look at
+the [[file:./init.el][init file]]
+It was inspired by Daniel Mai's config
+[[https://github.com/danielmai/.emacs.d][Github repo]]
+[[https://www.youtube.com/watch?v=gRb3bq0NiXY&feature=iv&src_vid=VIuOwIBL-ZU&annotation_id=annotation_1954847607][Youtube video]]
+
+In the next days, I'll implement [[http://www.treese.org/win/2015/08/tracing-emacs-init/][this]] instructions about tracing an init file
+form an org-mode file
+
+* Function definitions
+** Terminal or GUI
+
+#+BEGIN_SRC emacs-lisp
+
+(defun is-in-terminal()
+  "Returns true if emacs is running in a terminal"
+    (not (display-graphic-p)))
+
+(defmacro when-term (&rest body)
+  "Works just like `progn' but will only evaluate expressions
+   in VAR when Emacs is running in a terminal else just nil."
+  `(when (is-in-terminal) ,@body))
+
+(defmacro when-not-term (&rest body)
+  "Works just like `progn' but will only evaluate expressions
+   in VAR when Emacs is running in a terminal else just nil."
+  `(when (not (is-in-terminal)) ,@body))
+#+END_SRC
+
+* Theme
+** Solarized theme
+Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bbatsov's solarized themes]].
+
+#+begin_src emacs-lisp
+
+(custom-set-variables
+ '(custom-safe-themes (quote ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" default))))
+(custom-set-faces
+)
+
+(load-theme 'solarized-light t)
+#+end_src
+
+** Smart mode line 
+   [[https://github.com/Malabarba/smart-mode-line][Github page]]
+#+begin_src emacs-lisp              
+;;(setq sml/theme 'light)
+;;(sml/setup)
+#+end_src
+
+* Start-up options
+Ideas taken from various configs, especially from [[http://aaronbedra.com/emacs.d/][Aaron Bedra]]
+Some sane settings to begin Emacs.
+** General settings
+*** UTF-8 encoding
+
+#+BEGIN_SRC emacs-lisp
+;; UTF-8 please
+(require 'iso-transl)
+(setq locale-coding-system 'utf-8) ; pretty
+(set-terminal-coding-system 'utf-8) ; pretty
+(setq default-terminal-coding-system 'utf-8-unix) ; pretty
+(set-selection-coding-system 'utf-8) ; please
+(prefer-coding-system 'utf-8) ; with sugar on top
+(setq-default indent-tabs-mode nil)
+(set-locale-environment "en_US.UTF-8")
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+
+#+END_SRC
+
+Automatically convert line endings to Unix
+From [[https://www.emacswiki.org/emacs/EndOfLineTips][EmacsWiki: End Of Line Tips]]
+
+#+BEGIN_SRC emacs-lisp :results silent
+(defun no-junk-please-were-unixish ()
+  (let ((coding-str (symbol-name buffer-file-coding-system)))
+    (when (string-match "-\\(?:dos\\|mac\\)$" coding-str)
+      (set-buffer-file-coding-system 'unix))))
+ 
+(add-hook 'find-file-hooks 'no-junk-please-were-unixish)
+#+END_SRC
+
+*** Yes and no option
+#+BEGIN_SRC emacs-lisp
+;; Answering just 'y' or 'n' will do
+(defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+*** Line wrapping
+#+BEGIN_SRC emacs-lisp
+(add-hook 'text-mode-hook 'auto-fill-mode)
+(add-hook 'prog-mode-hook 'auto-fill-mode)
+
+;; set column width to 79 and visual line mode
+(setq-default fill-column 79)
+(global-visual-line-mode 1)
+
+#+END_SRC
+
+*** Package-initialize
+The idea was to use python from Anaconda distribution in emacs GUI.
+Taken from [[https://samrelton.wordpress.com/2013/09/26/emacs-and-anaconda-python/][Sam Relton's blog]]
+#+BEGIN_SRC emacs-lisp
+(defun set-exec-path-from-shell-PATH ()
+  (interactive)
+  (let ((path-from-shell (replace-regexp-in-string "^.*\n.*shell\n" "" (shell-command-to-string "$SHELL --login -i -c 'echo $PATH'"))))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+(when-not-term
+ (set-exec-path-from-shell-PATH)
+ )
+
+#+END_SRC
+
+*** Backups
+This is one of the things people usually want to change right away.
+By default, Emacs saves backup files in the current directory. These
+are the files ending in ~ that are cluttering up your directory
+lists. The following code stashes them all in ~/.emacs.d/backups,
+where I can find them with C-x C-f (find-file) if I really need to.
+
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+#+END_SRC
+
+*** Open-with
+Check this links:
+[[http://emacs.stackexchange.com/questions/3180/org-mode-cant-display-inline-images-when-openwith-mode-is-turned-on?rq=1][link1]]
+[[http://emacs.stackexchange.com/questions/5855/openwith-doesnt-work-in-dired][link2]]
+#+BEGIN_SRC emacs-lisp
+;;(when-not-term
+;;(openwith-mode -1)
+;;)
+#+END_SRC
+
+*** Dired
+
+Taken from this stack exchange [[http://emacs.stackexchange.com/questions/5603/how-to-quickly-copy-move-file-in-emacs-dired][link]] dired-dwim-target is a variable defined in
+`dired.el'. Its value is nil
+
+Documentation: If non-nil, Dired tries to guess a default target
+directory. This means: if there is a Dired buffer displayed in the next window,
+use its current directory, instead of this Dired buffer's current directory.
+
+The target is used in the prompt for file copy, rename etc.
+
+#+BEGIN_SRC emacs-lisp
+(setq dired-dwim-target t)
+#+END_SRC
+
+*** Other
+#+begin_src emacs-lisp :results silent
+
+;; (define-key global-map (kbd "RET") 'newline-and-indent)
+
+;; turn on automatic bracket insertion by pairs. New in emacs 24
+(electric-pair-mode 1)
+
+;; delete the region when typing, just like as we expect nowadays.
+(delete-selection-mode t)
+
+(show-paren-mode t)
+
+(size-indication-mode 1)
+(column-number-mode t)
+
+;; http://emacsredux.com/blog/2013/03/29/automatic-electric-indentation/
+;;(electric-indent-mode +1)
+
+
+;; pdf-tools
+;;(pdf-tools-install)
+
+;; Set default font
+;; (when-not-term
+;; (set-face-attribute 'default nil
+;;                     :family "Monaco"
+;;                     :height 120
+;;                     :weight 'normal
+;;                     :width 'normal)
+;; )
+
+#+end_src
+
+* EMMS
+Need to look into this in the future
+Load EMMS into emacs
+#+BEGIN_SRC emacs-lisp
+;;(require 'emms-setup)
+;;(emms-all)
+;;(emms-default-players)
+#+END_SRC
+
+Set music folder
+#+BEGIN_SRC emacs-lisp :results silent
+;;(setq emms-source-file-default-directory "~/Music/")
+#+END_SRC
+
+* Helm
+Helm is incremental completion and selection narrowing framework for Emacs. It
+will help steer you in the right direction when you're looking for stuff in
+Emacs (like buffers, files, etc).
+[[http://tuhdo.github.io/helm-intro.html][tutorial]]
+
+#+BEGIN_SRC emacs-lisp :results silent
+;; (use-package helm
+;;   :ensure t
+;;   :diminish helm-mode
+;;   :init (progn
+;;           (require 'helm-config)
+;;           (use-package helm-projectile
+;;             :ensure t
+;;             :commands helm-projectile
+;;             :bind ("C-c p h" . helm-projectile))
+;;           (use-package helm-ag :defer 10  :ensure t)
+;;           (setq helm-locate-command "mdfind -interpret -name %s %s"
+;;                 helm-ff-newfile-prompt-p nil
+;;                 helm-M-x-fuzzy-match t)
+;;           (helm-mode)
+;;           (use-package helm-swoop
+;;             :ensure t
+;;             :bind ("H-w" . helm-swoop)))
+;;   :bind (("C-c h" . helm-command-prefix)
+;;          ("C-`" . helm-resume)
+;;          ("C-x C-f" . helm-find-files)))
+#+END_SRC
+
+* Ivy 
+
+Great explanation from [[https://sam217pa.github.io/2016/09/13/from-helm-to-ivy/][here]]
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy :ensure t
+  :diminish (ivy-mode . "")
+  :bind
+  (:map ivy-mode-map
+   ("C-'" . ivy-avy))
+  :config
+  (ivy-mode 1)
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil)
+  ;; configure regexp engine.
+  (setq ivy-re-builders-alist
+	;; allow input not in order
+        '((t   . ivy--regex-ignore-order))))
+#+END_SRC
+
+* Swiper
+
+Taken from C'est la Z [[http://cestlaz.github.io/posts/using-emacs-6-swiper/][link]]
+
+#+BEGIN_SRC emacs-lisp
+;; it looks like counsel is a requirement for swiper
+(use-package counsel
+  :ensure t
+  )
+
+(use-package swiper
+  :ensure try
+  :config
+  (progn
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (global-set-key "\C-s" 'swiper)
+    (global-set-key (kbd "C-c C-r") 'ivy-resume)
+    (global-set-key (kbd "<f6>") 'ivy-resume)
+    (global-set-key (kbd "M-x") 'counsel-M-x)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+    (global-set-key (kbd "<f1> l") 'counsel-load-library)
+    (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+    (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+    (global-set-key (kbd "C-c g") 'counsel-git)
+    (global-set-key (kbd "C-c j") 'counsel-git-grep)
+    (global-set-key (kbd "C-c k") 'counsel-ag)
+    (global-set-key (kbd "C-x l") 'counsel-locate)
+    (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+    (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+    ))
+#+END_SRC
+
+* Company
+Company is a text completion framework for Emacs. The name stands for "complete
+anything". It uses pluggable back-ends and front-ends to retrieve and display
+completion candidates.
+[[http://company-mode.github.io/][official page]]
+
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :ensure t
+  :config (add-hook 'after-init-hook 'global-company-mode)
+  (add-to-list 'company-backends 'company-ob-ipython))
+#+END_SRC
+
+#+RESULTS:
+: t
+
+* Auctex
+ #+BEGIN_SRC emacs-lisp
+
+(use-package tex
+:ensure auctex)
+
+;;View LaTex compiled pdf in emacs
+(setq TeX-view-program-list '(("Emacs" "emacsclient %o")))
+(setq TeX-view-program-selection '((output-pdf "Emacs")))
+
+;;correlate SyncTeX
+(server-start)
+(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode)
+(add-hook 'LaTeX-mode-hook 'TeX-source-correlate-mode)
+(setq TeX-source-correlate-method 'synctex)
+(setq TeX-source-correlate-start-server t)
+
+;;latexMk
+(require 'auctex-latexmk)
+(auctex-latexmk-setup) 
+
+;;CDLaTeX
+(add-hook 'LaTeX-mode-hook 'turn-on-cdlatex) ;with AUCTeX LaTeX mode
+
+
+;;reftex
+;; Turn on RefTeX in AUCTeX
+(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+;; Activate nice interface between RefTeX and AUCTeX
+(setq reftex-plug-into-AUCTeX t)
+ #+END_SRC
+
+* Pdf Tools
+#+BEGIN_SRC emacs-lisp :results silent
+
+  (use-package pdf-tools
+    :ensure t
+    :pin manual ;; manually update
+    :config
+    ;; initialise
+    (pdf-tools-install)
+    ;; open pdfs scaled to fit page
+    (setq-default pdf-view-display-size 'fit-page)
+     ;; use normal isearch
+    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+    ;; more fine-grained zooming
+    (setq pdf-view-resize-factor 1.1)
+
+    ;; keyboard shortcuts
+    (define-key pdf-view-mode-map (kbd "h") 'pdf-annot-add-highlight-markup-annotation)
+    (define-key pdf-view-mode-map (kbd "t") 'pdf-annot-add-text-annotation)
+    (define-key pdf-view-mode-map (kbd "D") 'pdf-annot-delete))
+
+
+  (use-package org-pdfview
+    :ensure t)
+
+#+END_SRC
+
+** Interleave
+
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package interleave
+  :ensure t
+  :config
+  )
+
+#+END_SRC
+
+* Org mode
+Org-mode, as it says on the [[http://orgmode.org/][official web page]] is for keeping notes, maintaining
+ToDo lists, doing project planning, and authoring with a fast and effective
+plain-text system. You can find a quick tutorial [[http://orgmode.org/worg/org-tutorials/org4beginners.html][here]].
+
+There is an extensive config file from [[http://doc.norang.ca/org-mode.html][Bernt Hansen]] that I hope to continue
+implementing.
+
+#+BEGIN_SRC emacs-lisp
+
+  (org-babel-load-file "~/Documents/GTD/emacs-org.org")
+#+END_SRC
+
+ 
+** Basic configuration
+*** General
+#+BEGIN_SRC emacs-lisp :results silent
+
+;; prevent demoting heading also shifting text inside sections
+(setq org-adapt-indentation nil)
+
+;; Enable org export to odt (OpenDocument Text)
+;; It is disabled by default in org 8.x
+(require 'ox-odt nil t)
+(require 'ox-beamer nil t)
+
+;; electric pair
+(add-hook 'org-mode-hook
+          (lambda () 
+            (modify-syntax-entry ?~ "$~" org-mode-syntax-table)
+            (modify-syntax-entry ?/ "$/" org-mode-syntax-table)
+            ))
+;; utf-8
+(modify-coding-system-alist 'file "" 'utf-8-unix)
+
+#+END_SRC
+
+Adapt for org mode 9.0. 
+[[https://lists.gnu.org/archive/html/emacs-orgmode/2016-11/msg00176.html]]
+
+#+BEGIN_SRC emacs-lisp :results silent
+
+;;pdftools
+;;(add-to-list 'org-file-apps '("\\.pdf\\'" . org-pdfview-open))
+;;(add-to-list 'org-file-apps '("\\.pdf::\\([[:digit:]]+\\)\\'" . org-pdfview-open))
+
+(add-to-list 'org-file-apps 
+             '("\\.pdf\\'" . (lambda (file link) (org-pdfview-open link))))
+
+#+END_SRC
+
+Other general config
+#+BEGIN_SRC emacs-lisp
+;; set maximum indentation for description lists
+(setq org-list-description-max-indent 5)
+
+;; prevent demoting heading also shifting text inside sections
+(setq org-adapt-indentation nil)
+
+#+END_SRC
+
+*** Inline images
+
+#+BEGIN_SRC emacs-lisp
+(when-term
+(setq org-startup-with-inline-images t)
+)
+
+;;(setq org-image-actual-width t)
+(setq org-image-actual-width 400)
+
+#+END_SRC
+
+*** Live refresh of inline images
+Taken from this Stack Exchange [[http://emacs.stackexchange.com/questions/3302/live-refresh-of-inline-images-with-org-display-inline-images][post]] 
+#+BEGIN_SRC emacs-lisp
+
+(defun shk-fix-inline-images ()
+  (when org-inline-image-overlays
+    (org-redisplay-inline-images)))
+
+(eval-after-load 'org
+  (add-hook 'org-babel-after-execute-hook 'shk-fix-inline-images))
+
+#+END_SRC
+
+*** Latex
+#+BEGIN_SRC emacs-lisp
+;;(setq org-format-latex-options (plist-put org-format-latex-options :scale 1.5))
+
+;;CDLaTeX
+(add-hook 'org-mode-hook 'turn-on-org-cdlatex)
+
+;; use LaTeXMK
+;;(setq org-latex-pdf-process (list "latexmk"))
+
+;; MathML
+;;(setq org-latex-to-mathml-convert-command
+;;      "latexmlmath \"%i\" --presentationmathml=%o")
+#+END_SRC
+
+Turn on some packages by default
+
+#+BEGIN_SRC emacs-lisp :results silent
+(add-to-list 'org-latex-packages-alist '("margin=3cm" "geometry"))
+(add-to-list 'org-latex-packages-alist '("" "siunitx"))
+(add-to-list 'org-latex-packages-alist '("" "amsmath"))
+(add-to-list 'org-latex-packages-alist '("" "amssymb"))
+(add-to-list 'org-latex-packages-alist '("" "tikz" t))
+
+#+END_SRC
+
+Add support for ~minted~ package to have a pretty \LaTeX output for source code
+blocks
+
+#+BEGIN_SRC emacs-lisp :results silent
+;;Minted
+(setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -synctex=1 -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -synctex=1 -output-directory %o %f"))
+
+(add-to-list 'org-latex-packages-alist
+             '("" "tikz" t))
+
+(eval-after-load "preview"
+  '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
+
+(setq org-latex-create-formula-image-program 'imagemagick)
+
+(require 'ox-latex)
+(add-to-list 'org-latex-packages-alist '("cache=false" "minted" nil))
+(add-to-list 'org-latex-minted-langs '(ipython "python"))
+
+#+END_SRC
+
+Org Latex highlight
+
+#+BEGIN_SRC emacs-lisp :results silent
+(setq org-highlight-latex-and-related '(latex))
+#+END_SRC
+
+Add moderncv class
+https://tex.stackexchange.com/questions/386620/export-into-pdf-a-moderncv-org-mode-file-mactex
+
+#+BEGIN_SRC emacs-lisp :results silent
+(with-eval-after-load 'ox-latex
+  (add-to-list 'org-latex-classes
+               '("moderncv"
+                 "\\documentclass{moderncv}"
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}"))))
+
+;; (setq org-latex-default-packages-alist
+;;       (-remove-item
+;;        '("" "hyperref" nil)
+;;        org-latex-default-packages-alist))
+#+END_SRC
+
+*** Timer
+#+BEGIN_SRC emacs-lisp :results silent
+;;(setq org-clock-sound nil) ;; no sound
+(setq org-clock-sound t) ;; Standard Emacs beep
+
+#+END_SRC
+
+*** Org-cliplink
+A simple command that takes a URL from the clipboard and inserts an org-mode
+link with a title of a page found by the URL into the current buffer.
+[[https://github.com/rexim/org-cliplink][GitHub - rexim/org-cliplink: Insert org-mode links from clipboard]]
+
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package org-cliplink
+  :ensure try
+  :config
+  (global-set-key (kbd "C-x p i") 'org-cliplink)
+  )
+#+END_SRC
+
+*** Org download
+Drag and drop images to Emacs org-mode
+[[https://github.com/abo-abo/org-download][GitHub - abo-abo/org-download: Drag and drop images to Emacs org-mode]]
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-download
+  :ensure t)
+#+END_SRC
+
+** Org-reveal
+#+BEGIN_SRC emacs-lisp :results silent
+
+(use-package ox-reveal
+  :ensure ox-reveal
+  :config
+  (setq org-reveal-mathjax t)
+  (setq org-reveal-root ""))
+
+#+END_SRC
+** Org Babel
+*** General configuration
+
+(require 'ob-ipython)
+
+You can add more languages with (language . t)
+#+begin_src emacs-lisp :results silent
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (ipython . t)
+   (C . t)
+   (calc . t)
+   (latex . t)
+   (emacs-lisp . t)
+   (shell . t)
+   (R . t)
+   (ledger . t)
+   (js         . t)
+   (perl       . t)
+   (clojure    . t)
+   (ruby       . t)
+   (dot        . t)
+   (css        . t)
+   (plantuml   . t)
+   (ditaa      . t)
+   ))
+
+(defun my-org-confirm-babel-evaluate (lang body)
+  "Do not confirm evaluation for these languages."
+  (not (or (string= lang "C")
+           (string= lang "python")
+           (string= lang "emacs-lisp")
+           (string= lang "latex")
+           (string= lang "ipython")
+           (string= lang "sh")
+           (string= lang "bash")
+           (string= lang "R")
+           (string= lang "ledger")
+           (string= lang "dot")
+           (string= lang "plantuml")
+           (string= lang "ditaa")
+           )))
+(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+
+;; use ob-async
+
+(use-package ob-async
+  :ensure t
+  :config
+  ;; (add-to-list 'org-ctrl-c-ctrl-c-hook 'ob-async-org-babel-execute-src-block)
+  )
+#+end_src
+
+*** Source blocks
+#+begin_src emacs-lisp :results silent
+
+;; (setq org-latex-listings t)
+;; (add-to-list 'org-latex-packages-alist '("" "listings"))
+;; (add-to-list 'org-latex-packages-alist '("" "color"))
+
+;; (require 'htmlize)
+(setq org-src-fontify-natively t
+      org-src-window-setup 'current-window
+      org-src-strip-leading-and-trailing-blank-lines t
+      org-src-tab-acts-natively t
+      org-src-preserve-indentation t
+      org-edit-src-content-indentation 0)
+
+;; Change org latex table scientific notation
+(setq org-latex-table-scientific-notation "\\( %s\\times10^{%s} \\)")
+
+#+end_src
+
+*** Languages
+
+**** Ditaa
+Add this to fix could not find ditaa.jar
+#+BEGIN_SRC emacs-lisp
+(setq org-ditaa-jar-path "/usr/bin/ditaa")
+#+END_SRC
+
+**** Ob-ipython
+
+#+BEGIN_SRC emacs-lisp
+(use-package ob-ipython
+  :ensure t
+  :init
+)
+
+#+END_SRC
+
+** Agenda
+
+#+BEGIN_SRC emacs-lisp :results silent
+;; set key for agenda and capture
+;; file to save todo items
+(setq org-agenda-files '("~/Documents/GTD/work.org"
+                         "~/Documents/GTD/personal.org"))
+
+;;finish
+
+#+END_SRC
+   
+** Links
+
+#+BEGIN_SRC emacs-lisp :results silent
+(defun org-custom-link-img-follow (path)
+  (org-open-file-with-emacs
+   (format "../images/%s" path)))
+
+(defun org-custom-link-img-export (path desc format)
+  (cond
+   ((eq format 'html)
+    (format "<img src=\"/images/%s\" alt=\"%s\"/>" path desc))))
+
+(org-add-link-type "img" 'org-custom-link-img-follow 'org-custom-link-img-export)
+
+#+END_SRC
+
+** Capture
+
+#+BEGIN_SRC emacs-lisp :results silent
+(setq org-capture-templates
+
+      '(("p" "Personal templates") ("w" "work templates")
+
+        ("pt" "Todo entry"  entry
+         (file+headline "~/Documents/GTD/personal.org" "Capture")
+         (file "~/Documents/GTD/tpl-todo.txt")
+         :empty-lines 1 :prepend t)
+
+        ("n" "Thought or Note"  entry
+          (file+headline "~/Documents/GTD/ideas.org" "Capture")
+          "* %?\n\n  %i\n\n  See: %a" :empty-lines 1)
+
+        ("pd" "Daily Plan" plain (file+olp+datetree "~/Documents/GTD/personal-dailyPlan.org")
+         (file "~/Documents/GTD/tpl-dailyPlan.txt") :immediate-finish t)
+
+        ("b" "Book"  entry
+         (file+headline "~/Documents/GTD/references.org" "Capture")
+         (file "~/Documents/GTD/tpl-books.txt")
+         :empty-lines 1)
+
+        ("k" "Bookmarks"  entry
+         (file+headline "~/Documents/GTD/references.org" "Bookmarks")
+         (file "~/Documents/GTD/tpl-bookmarks.txt")
+         :empty-lines 1 :prepend t)
+        
+        ("j" "Journal entry" item (file+olp+datetree
+                                     "~/Documents/GTD/journal.org")
+         "%^{Activity}")
+        
+        
+        ("wt" "Todo entry"  entry
+         (file+headline "~/Documents/GTD/work.org" "Capture")
+         (file "~/Documents/GTD/tpl-todo.txt")
+         :empty-lines 1)
+
+        ("g" "goal"  entry
+         (file+headline "~/Documents/GTD/goals.org" "Capture")
+         (file "~/Documents/GTD/tpl-goals.txt")
+         :empty-lines 1 :prepend t)
+
+      ))
+#+END_SRC
+
+** Refile
+
+Set up the targets:
+#+BEGIN_SRC emacs-lisp :results silent
+(setq org-refile-targets '(("~/Documents/GTD/personal.org" :maxlevel . 4)
+                           ("~/Documents/GTD/work.org" :maxlevel . 4)
+                           ;;("~/" :level . 2)
+                           ))
+
+#+END_SRC
+
+** Id links
+
+#+BEGIN_SRC emacs-lisp :results silent
+(require 'org-id)
+(setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+
+#+END_SRC
+
+* Yasnippet
+
+#+BEGIN_SRC emacs-lisp
+
+;; ;;(yas-reload-all)
+;; (add-hook 'prog-mode-hook #'yas-minor-mode)
+;; (add-hook 'text-mode-hook #'yas-minor-mode)
+
+;; Remove Yasnippet's default tab key binding
+;;(define-key yas-minor-mode-map (kbd "<tab>") nil)
+;;(define-key yas-minor-mode-map (kbd "TAB") nil)
+;; Set Yasnippet's key binding to shift+tab
+;;(define-key yas-minor-mode-map (kbd "<backtab>") 'yas-expand)
+;; Alternatively use Control-c + tab
+;;(define-key yas-minor-mode-map (kbd "\C-c TAB") 'yas-expand)
+
+;; (eval-after-load 'yasnippet
+;;   '(progn
+;;      (define-key yas-keymap (kbd "TAB") nil)
+;;      (define-key yas-keymap (kbd "C-o") 'yas-next-field-or-maybe-expand)
+;; ))
+
+(use-package yasnippet
+  :ensure t
+  :diminish yas-minor-mode
+  :init (yas-global-mode)
+  )
+#+END_SRC
+
+* Flycheck
+
+#+BEGIN_SRC emacs-lisp :results silent
+;; flycheck
+(use-package flycheck
+  :ensure t
+  :diminish flycheck-mode
+  :init (global-flycheck-mode))
+
+#+END_SRC
+
+* Ledger-mode
+
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package ledger-mode
+  :ensure t
+  :mode "\\.ledger\\'"
+  :config
+  (define-key ledger-mode-map (kbd "C-c c") 'ledger-mode-clean-buffer)
+  (setq ledger-post-amount-alignment-at :decimal
+        ledger-post-amount-alignment-column 49
+        ledger-clear-whole-transactions t)
+  (use-package flycheck-ledger
+    :ensure t ))
+
+#+END_SRC
+
+* Prodigy
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package prodigy
+  :ensure t
+  :config
+  (prodigy-define-service
+    :name "nikola"
+    :command "nikola"
+    :args '("auto")
+    :cwd "/home/carlosperez/Documents/gh/blog"
+    :tags '(blog nikola)
+    :stop-signal 'sigint
+    :kill-process-buffer-on-stop: t
+    ))
+
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+(defun nikola-deploy () ""
+       (interactive)
+       (venv-with-virtualenv "nikolablog" (shell-command "cd /home/carlosperez/Documents/gh/blog; nikola github_deploy"))
+       )
+
+#+END_SRC
+
+* Git
+Adding a new section about all git-related stuff
+
+** Magit
+Magit is an interface to the version control system Git, implemented as an
+Emacs package.
+
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package magit
+  :ensure t
+  :init
+  (progn
+  (bind-key "C-x g" 'magit-status)
+  )
+  :config
+  (setq vc-handled-backends (delq 'Git vc-handled-backends))
+  (global-set-key (kbd "C-x M-g") 'magit-dispatch-popup)
+  global-magit-file-mode
+)
+#+END_SRC
+
+* Programming languages
+** Python
+Some configurations for elpy mode taken from [[https://github.com/jorgenschaefer/elpy/wiki/Configuration][here]]
+Also from [[https://github.com/zamansky/using-emacs/blob/master/myinit.org][CestlaZ]]
+
+Useful to solve conflict between elpy and ob-ipython
+[[https://necromuralist.github.io/posts/org-babel-ipython-and-elpy-conflict/][link]]
+
+#+BEGIN_SRC emacs-lisp :results silent
+
+;; (setq py-python-command "python3")
+;; (setq python-shell-interpreter "python3")
+;; (setq elpy-rpc-backend "jedi")
+
+;; (use-package jedi
+;;   :ensure t
+;;   :init
+;;   (add-hook 'python-mode-hook 'jedi:setup)
+;;   (add-hook 'python-mode-hook 'jedi:ac-setup))
+
+(use-package elpy
+  :ensure t
+  :config 
+  (elpy-enable)
+  (setq python-shell-interpreter "ipython"
+        python-shell-interpreter-args "-i --simple-prompt"))
+
+(use-package virtualenvwrapper
+  :ensure t
+  :config
+  (venv-initialize-interactive-shells)
+  (venv-initialize-eshell))
+
+
+#+END_SRC
+
+*** Ein
+The Emacs IPython Notebook
+
+#+BEGIN_SRC emacs-lisp
+(use-package ein
+  :ensure t
+  :commands (ein:notebooklist-open))
+
+#+END_SRC
+
+*** Virtualenv
+
+#+BEGIN_SRC emacs-lisp :results silent
+(setenv "WORKON_HOME" "/home/carlosperez/anaconda3/envs")
+(pyvenv-mode 1)
+#+END_SRC
+
+** Bash
+Use company mode with bash
+#+BEGIN_SRC emacs-lisp :results silent
+(add-hook 'shell-mode-hook #'company-mode)
+(define-key shell-mode-map (kbd "TAB") #'company-manual-begin)
+
+#+END_SRC
+
+** CPP
+
+#+BEGIN_SRC emacs-lisp
+(use-package irony
+  :ensure t
+  :config (add-hook 'c++-mode-hook 'irony-mode)
+  (add-hook 'c-mode-hook 'irony-mode)
+  (add-hook 'objc-mode-hook 'irony-mode)
+
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options))
+
+
+(use-package company-c-headers
+  :ensure t
+  :config
+  (add-to-list 'company-backends 'company-c-headers)
+  (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)))
+
+
+(require 'company-irony-c-headers)
+;; Load with `irony-mode` as a grouped backend
+(eval-after-load 'company
+  '(add-to-list
+    'company-backends '(company-irony-c-headers company-irony)))
+
+(use-package clang-format
+  :ensure t
+  :config
+  (global-set-key (kbd "C-c i") 'clang-format-region)
+  (global-set-key (kbd "C-c u") 'clang-format-buffer)
+
+  (setq clang-format-style-option "llvm"))
+
+#+END_SRC
+
+** Geiser
+
+#+BEGIN_SRC emacs-lisp
+(use-package geiser
+  :ensure t)
+#+END_SRC
+
+* Hugo blog
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-hugo
+  :ensure t            ;Auto-install the package from Melpa (optional)
+  :after ox)
+#+END_SRC
+
+* CV
+My CV configuration
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package ox-moderncv
+  :load-path "/home/carlosperez/Documents/CV/org-cv/"
+  :init (require 'ox-moderncv))
+#+END_SRC
+
+This package allows to have a single org file and different export options.
