@@ -39,6 +39,19 @@ Check this approach: [[http://www.holgerschurig.de/en/emacs-init-tangle/][Effici
   `(when (not (is-in-terminal)) ,@body))
 #+END_SRC
 
+** Tangle automatically 
+
+#+BEGIN_SRC emacs-lisp
+(defun my/tangle-dotfiles ()
+  "If the current file is in '~/dot-files', the code blocks are tangled"
+  (when (equal (file-name-directory (directory-file-name buffer-file-name))
+               (concat (getenv "HOME") "/dot-files/"))
+    (org-babel-tangle)
+    (message "%s tangled" buffer-file-name)))
+
+(add-hook 'after-save-hook #'my/tangle-dotfiles)
+#+END_SRC
+
 * Theme
 ** Solarized theme
 Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bbatsov's solarized themes]].
