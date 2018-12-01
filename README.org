@@ -8,3 +8,4 @@ Some useful links to be implemented:
  - [[https://github.com/howardabrams/dot-files][GitHub - howardabrams/dot-files]]
  - [[https://github.com/dieggsy/dotfiles][GitHub - dieggsy/dotfiles: My dotfiles and some scripts]]
  - [[https://github.com/ivoarch/.dot-org-files][GitHub - ivoarch/.dot-org-files]]
+ - [[https://github.com/dakrone/dakrone-dotfiles/blob/master/index.org][dakrone-dotfiles]] : investigate makefile to automate tangling

@@ -17,6 +17,8 @@ It was inspired by Daniel Mai's config
 In the next days, I'll implement [[http://www.treese.org/win/2015/08/tracing-emacs-init/][this]] instructions about tracing an init file
 form an org-mode file
 
+Check this approach: [[http://www.holgerschurig.de/en/emacs-init-tangle/][Efficient Emacs .org ➞ .el tangling]]
+
 * Function definitions
 ** Terminal or GUI
 
