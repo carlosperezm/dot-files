@@ -1,6 +1,23 @@
 #+TITLE: Emacs org configuration file
 #+AUTHOR: Carlos Perez
 
+#+DESCRIPTION: A literate programming version of my Emacs Initialization of Org-Mode
+
+#+PROPERTY:    header-args:emacs-lisp  :tangle ~/.emacs.d/elisp/init-org-mode.el
+#+PROPERTY:    header-args:sh     :tangle no
+#+PROPERTY:    header-args:       :results silent   :eval no-export   :comments org
+
+
+* Technical Artifacts
+Need to provide the =init-org-mode= so that I can require this
+package.
+
+#+BEGIN_SRC emacs-lisp
+(provide 'init-org-mode)
+#+END_SRC
+
+Before you can build this on a new system, make sure that you put the cursor
+over any of these properties, and hit: =C-c C-c=
 * General
 Adapted from [[https://github.com/mwfogleman/.emacs.d/blob/master/michael.org][mwfogleman/.emacs.d · GitHub]]
 The theming is derived from [[https://lepisma.github.io/2017/10/28/ricing-org-mode/][Ricing up Org Mode]]

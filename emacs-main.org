@@ -408,8 +408,7 @@ There is an extensive config file from [[http://doc.norang.ca/org-mode.html][Ber
 implementing.
 
 #+BEGIN_SRC emacs-lisp
-
-  (org-babel-load-file "~/dot-files/emacs-org.org")
+(require 'init-org-mode)
 #+END_SRC
 
  
