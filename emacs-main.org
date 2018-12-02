@@ -216,6 +216,7 @@ Some sane settings to begin Emacs.
 (when (file-exists-p custom-file)
   (load custom-file))
 #+END_SRC
+
 *** UTF-8 encoding
 
 #+BEGIN_SRC emacs-lisp
@@ -548,7 +549,6 @@ implementing.
 #+BEGIN_SRC emacs-lisp
 (require 'init-org-mode)
 #+END_SRC
-
  
 ** Basic configuration
 *** General
@@ -726,6 +726,7 @@ Drag and drop images to Emacs org-mode
 #+END_SRC
 
 ** Org-reveal
+
 #+BEGIN_SRC emacs-lisp :results silent
 
 (use-package ox-reveal
@@ -735,6 +736,7 @@ Drag and drop images to Emacs org-mode
   (setq org-reveal-root ""))
 
 #+END_SRC
+
 ** Org Babel
 *** General configuration
 
@@ -1144,3 +1146,31 @@ My CV configuration
 #+END_SRC
 
 This package allows to have a single org file and different export options.
+
+* Final configuration
+Before we finish, we need to check if there is a local file for us to load
+and evaluate.  We assume the local file has been tangled and provides the
+=init-local= key:
+
+#+BEGIN_SRC elisp
+(require 'init-local nil t)
+#+END_SRC
+
+After the first load, we can reload this with a require:
+
+   #+BEGIN_SRC elisp
+(provide 'init-main)
+   #+END_SRC
+
+Before you can build this on a new system, make sure that you put the cursor
+over any of these properties, and hit: =C-c C-c=
+
+Finally, show elapsed time
+
+#+BEGIN_SRC emacs-lisp
+;; Message how long it took to load everything (minus packages)
+(let ((elapsed (float-time (time-subtract (current-time)
+                                          emacs-start-time))))
+  (message "Loading settings...done (%.3fs)" elapsed))
+#+END_SRC
+
