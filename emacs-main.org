@@ -1,12 +1,13 @@
 #+TITLE: Emacs configuration file
 #+AUTHOR: Carlos Perez
 #+EMAIL: carlosperezmolano@gmail.com
-#+LANGUAGE: en
-#+SELECT_TAGS: export
-#+EXCLUDE_TAGS: noexport
-#+CREATOR: Emacs 24.3.1 (Org mode 8.3.2)
-# #+STARTUP: indent
 
+#+DESCRIPTION: A literate programming version of my Emacs Initialization script, loaded by the .emacs file.
+#+PROPERTY:    header-args:emacs-lisp  :tangle ~/.emacs.d/elisp/init-main.el
+#+PROPERTY:    header-args:shell  :tangle no
+#+PROPERTY:    header-args        :results silent   :eval no-export   :comments org
+#+OPTIONS:     num:nil toc:nil todo:nil tasks:nil tags:nil
+#+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 
 This is my Emacs configuration file written in org-mode. You can take a look at
 the [[file:./init.el][init file]]
