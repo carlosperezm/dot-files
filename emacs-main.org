@@ -9,16 +9,24 @@
 #+OPTIONS:     num:nil toc:nil todo:nil tasks:nil tags:nil
 #+OPTIONS:     skip:nil author:nil email:nil creator:nil timestamp:nil
 
+* Introduction
 This is my Emacs configuration file written in org-mode. You can take a look at
 the [[file:./init.el][init file]]
 It was inspired by Daniel Mai's config
 [[https://github.com/danielmai/.emacs.d][Github repo]]
 [[https://www.youtube.com/watch?v=gRb3bq0NiXY&feature=iv&src_vid=VIuOwIBL-ZU&annotation_id=annotation_1954847607][Youtube video]]
 
-In the next days, I'll implement [[http://www.treese.org/win/2015/08/tracing-emacs-init/][this]] instructions about tracing an init file
-form an org-mode file
+I have also adapted the approach from Howard Abrams in [[https://github.com/howardabrams/dot-files/blob/master/emacs.org][howardabrams/dot-files ·
+GitHub]]
 
-Check this approach: [[http://www.holgerschurig.de/en/emacs-init-tangle/][Efficient Emacs .org ➞ .el tangling]]
+To "load" the contents of this file, add the following to =$HOME/.init.el=:
+
+#+BEGIN_SRC elisp :tangle no
+;; Load our Literate Programming version of our Dot Emacs
+;; file, from file: ~/dot-files/emacs.org
+(load-file "~/.emacs.d/elisp/init-main.el")
+(server-start)
+#+END_SRC
 
 * General Settings
 This section has been copied from the configuration of Howard Abrams.
@@ -77,16 +85,7 @@ using HTTPS... increase the minimum prime bits size:
 (setq gnutls-min-prime-bits 4096)
 #+END_SRC
 
-* Introduction
-To "load" the contents of this file, add the following to =$HOME/.emacs=:
-
-#+BEGIN_SRC elisp :tangle no
-;; Load our Literate Programming version of our Dot Emacs
-;; file, from file: ~/Work/dot-files/emacs.org
-(load-file "~/.emacs.d/elisp/init-main.el")
-(server-start)
-#+END_SRC
-
+* Initial settings
 Keep track of loading time
 #+BEGIN_SRC emacs-lisp
 (defconst emacs-start-time (current-time))
