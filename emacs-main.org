@@ -1128,11 +1128,21 @@ Use company mode with bash
 #+END_SRC
 
 * Hugo blog
-
+** Basic setup
 #+BEGIN_SRC emacs-lisp
 (use-package ox-hugo
   :ensure t            ;Auto-install the package from Melpa (optional)
-  :after ox)
+  :after ox
+)
+#+END_SRC
+
+Last modified function taken from here: 
+#+BEGIN_SRC emacs-lisp
+(defun my/ox-hugo-add-lastmod ()
+  "Add `lastmod' property with the current time."
+  (interactive) 
+  (org-set-property "EXPORT_HUGO_LASTMOD"
+                    (format-time-string "[%Y-%m-%d %a %H:%M]")))
 #+END_SRC
 
 ** emacs-easy-hugo
