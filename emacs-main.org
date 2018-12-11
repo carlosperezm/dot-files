@@ -16,8 +16,7 @@ It was inspired by Daniel Mai's config
 [[https://github.com/danielmai/.emacs.d][Github repo]]
 [[https://www.youtube.com/watch?v=gRb3bq0NiXY&feature=iv&src_vid=VIuOwIBL-ZU&annotation_id=annotation_1954847607][Youtube video]]
 
-I have also adapted the approach from Howard Abrams in [[https://github.com/howardabrams/dot-files/blob/master/emacs.org][howardabrams/dot-files ·
-GitHub]]
+I have also adapted the approach from Howard Abrams in [[https://github.com/howardabrams/dot-files/blob/master/emacs.org][github]]
 
 To "load" the contents of this file, add the following to =$HOME/.init.el=:
 
