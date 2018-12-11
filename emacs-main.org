@@ -564,7 +564,6 @@ implementing.
 (add-hook 'org-mode-hook
           (lambda () 
             (modify-syntax-entry ?~ "$~" org-mode-syntax-table)
-            (modify-syntax-entry ?/ "$/" org-mode-syntax-table)
             ))
 ;; utf-8
 (modify-coding-system-alist 'file "" 'utf-8-unix)
