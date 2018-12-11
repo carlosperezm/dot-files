@@ -1135,6 +1135,26 @@ Use company mode with bash
   :after ox)
 #+END_SRC
 
+** emacs-easy-hugo
+#+BEGIN_SRC emacs-lisp
+(use-package easy-hugo
+  :ensure t
+  :init
+  (setq easy-hugo-basedir "~/Documents/blog-hugo")
+  (setq easy-hugo-postdir "content/post")
+  (setq easy-hugo-previewtime "300")
+  (setq easy-hugo-url "")
+  (setq easy-hugo-preview-url "http://localhost:1313/blog/")
+  (setq easy-hugo-sshdomain "")
+  (setq easy-hugo-root "")
+  (setq easy-hugo-default-ext ".md")
+  ;;:bind ("C-c C-e" . easy-hugo)
+)
+
+#+END_SRC
+
+** Capture setup
+
 * CV
 My CV configuration
 #+BEGIN_SRC emacs-lisp :results silent
