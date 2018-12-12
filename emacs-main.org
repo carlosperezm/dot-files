@@ -997,6 +997,24 @@ Emacs package.
 #+END_SRC
 
 * which-key
+
+#+BEGIN_SRC emacs-lisp
+(use-package which-key
+  :ensure t
+  :defer 10
+  :config
+  (progn
+    (setq which-key-popup-type 'side-window) ;Default
+    ;; (setq which-key-popup-type 'minibuffer)
+
+    (setq which-key-compute-remaps t) ;Show correct descriptions for remapped keys
+
+    (setq which-key-allow-multiple-replacements t) ;Default = nil
+
+    (which-key-mode 1)))
+
+#+END_SRC
+
 * Programming languages
 ** Python
 Some configurations for elpy mode taken from [[https://github.com/jorgenschaefer/elpy/wiki/Configuration][here]]
