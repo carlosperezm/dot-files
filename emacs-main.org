@@ -313,40 +313,6 @@ The target is used in the prompt for file copy, rename etc.
 (setq dired-dwim-target t)
 #+END_SRC
 
-*** Other
-#+begin_src emacs-lisp :results silent
-
-;; (define-key global-map (kbd "RET") 'newline-and-indent)
-
-;; turn on automatic bracket insertion by pairs. New in emacs 24
-(electric-pair-mode 1)
-
-;; delete the region when typing, just like as we expect nowadays.
-(delete-selection-mode t)
-
-(show-paren-mode t)
-
-(size-indication-mode 1)
-(column-number-mode t)
-
-;; http://emacsredux.com/blog/2013/03/29/automatic-electric-indentation/
-;;(electric-indent-mode +1)
-
-
-;; pdf-tools
-;;(pdf-tools-install)
-
-;; Set default font
-;; (when-not-term
-;; (set-face-attribute 'default nil
-;;                     :family "Monaco"
-;;                     :height 120
-;;                     :weight 'normal
-;;                     :width 'normal)
-;; )
-
-#+end_src
-
 * EMMS
 Need to look into this in the future
 Load EMMS into emacs
@@ -359,35 +325,6 @@ Load EMMS into emacs
 Set music folder
 #+BEGIN_SRC emacs-lisp :results silent
 ;;(setq emms-source-file-default-directory "~/Music/")
-#+END_SRC
-
-* Helm
-Helm is incremental completion and selection narrowing framework for Emacs. It
-will help steer you in the right direction when you're looking for stuff in
-Emacs (like buffers, files, etc).
-[[http://tuhdo.github.io/helm-intro.html][tutorial]]
-
-#+BEGIN_SRC emacs-lisp :results silent
-;; (use-package helm
-;;   :ensure t
-;;   :diminish helm-mode
-;;   :init (progn
-;;           (require 'helm-config)
-;;           (use-package helm-projectile
-;;             :ensure t
-;;             :commands helm-projectile
-;;             :bind ("C-c p h" . helm-projectile))
-;;           (use-package helm-ag :defer 10  :ensure t)
-;;           (setq helm-locate-command "mdfind -interpret -name %s %s"
-;;                 helm-ff-newfile-prompt-p nil
-;;                 helm-M-x-fuzzy-match t)
-;;           (helm-mode)
-;;           (use-package helm-swoop
-;;             :ensure t
-;;             :bind ("H-w" . helm-swoop)))
-;;   :bind (("C-c h" . helm-command-prefix)
-;;          ("C-`" . helm-resume)
-;;          ("C-x C-f" . helm-find-files)))
 #+END_SRC
 
 * Ivy 
