@@ -386,6 +386,14 @@ The target is used in the prompt for file copy, rename etc.
 (setq dired-dwim-target t)
 #+END_SRC
 
+*** Info in modeline
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode t)
+(size-indication-mode 1)
+(column-number-mode t)
+#+END_SRC
+
 * EMMS
 Need to look into this in the future
 Load EMMS into emacs
