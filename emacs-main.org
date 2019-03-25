@@ -181,18 +181,86 @@ Set priorities of packages. Higher values are searched first
 (add-hook 'after-save-hook #'my/tangle-dotfiles)
 #+END_SRC
 
+** Disable all themes
+#+BEGIN_SRC emacs-lisp
+(defun cp/disable-all-themes ()
+  (interactive)
+  (mapc #'disable-theme custom-enabled-themes))
+#+END_SRC
+
 * Theme
+All this configuration is taken from [[https://www.greghendershott.com/2017/02/emacs-themes.html][Emacs Themes]]
+** Advice and hooks
+#+BEGIN_SRC emacs-lisp
+;;; Theme hooks
+
+(defvar cp/theme-hooks nil
+  "((theme-id . function) ...)")
+
+(defun cp/add-theme-hook (theme-id hook-func)
+  (add-to-list 'cp/theme-hooks (cons theme-id hook-func)))
+
+(defun cp/load-theme-advice (f theme-id &optional no-confirm no-enable &rest args)
+  "Enhances `load-theme' in two ways:
+1. Disables enabled themes for a clean slate.
+2. Calls functions registered using `cp/add-theme-hook'."
+  (unless no-enable
+    (cp/disable-all-themes))
+  (prog1
+      (apply f theme-id no-confirm no-enable args)
+    (unless no-enable
+      (pcase (assq theme-id cp/theme-hooks)
+        (`(,_ . ,f) (funcall f))))))
+
+(advice-add 'load-theme
+            :around
+            #'cp/load-theme-advice)
+
+#+END_SRC
+
+** Material theme
+#+BEGIN_SRC emacs-lisp
+(use-package material-theme
+  :ensure t
+  :defer t
+  :init
+  (defun cp/material-theme-hook ()
+    (loop for n from 1 to 8
+          do (set-face-attribute (intern-soft (format "org-level-%s" n))
+                                 nil
+                                 :height     'unspecified
+                                 :background 'unspecified
+                                 :box        'unspecified)))
+  (cp/add-theme-hook 'material       #'cp/material-theme-hook)
+  (cp/add-theme-hook 'material-light #'cp/material-theme-hook))
+#+END_SRC
+
 ** Solarized theme
 Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bbatsov's solarized themes]].
 
 #+begin_src emacs-lisp
-
-(custom-set-variables
- '(custom-safe-themes (quote ("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" default))))
-(custom-set-faces
-)
-
-(load-theme 'solarized-light t)
+(use-package solarized-theme
+  :ensure t
+  :defer t
+  :init
+  ;; (defun cp/solarized-theme-hook ()
+  ;;   (set-face-attribute 'font-lock-constant-face nil :weight 'normal)
+  ;;   (set-face-attribute 'font-lock-function-name-face nil :weight 'bold))
+  
+  ;; (cp/add-theme-hook 'solarized-dark  #'cp/solarized-theme-hook)
+  ;; (cp/add-theme-hook 'solarized-light #'cp/solarized-theme-hook)
+  :config
+  (setq solarized-use-variable-pitch nil
+        solarized-use-less-bold t
+        solarized-use-more-italic nil
+        solarized-distinct-doc-face t
+        solarized-high-contrast-mode-line t
+        ;; I find different font sizes irritating.
+        solarized-height-minus-1 1.0
+        solarized-height-plus-1 1.0
+        solarized-height-plus-2 1.0
+        solarized-height-plus-3 1.0
+        solarized-height-plus-4 1.0))
 #+end_src
 
 ** Smart mode line 
@@ -201,6 +269,11 @@ Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bba
 ;;(setq sml/theme 'light)
 ;;(sml/setup)
 #+end_src
+
+** Use this theme
+#+BEGIN_SRC emacs-lisp
+(load-theme 'solarized-light t)
+#+END_SRC
 
 * Start-up options
 Ideas taken from various configs, especially from [[http://aaronbedra.com/emacs.d/][Aaron Bedra]]
