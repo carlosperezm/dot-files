@@ -1252,6 +1252,40 @@ My CV configuration
 
 This package allows to have a single org file and different export options.
 
+* Writing
+** Writegood mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package writegood-mode
+  :ensure t
+  :defer t
+  :config
+  (global-set-key "\C-cg" 'writegood-mode)
+)
+#+END_SRC
+
+** Wordcount mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package wc-mode
+  :ensure t
+  :defer t
+  :config
+  (global-set-key "\C-cw" 'wc-mode)
+)
+#+END_SRC
+
+** org-wc
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-wc
+  :ensure t
+  :defer t
+  :config
+)
+#+END_SRC
+
+
 * Final configuration
 Before we finish, we need to check if there is a local file for us to load
 and evaluate.  We assume the local file has been tangled and provides the
