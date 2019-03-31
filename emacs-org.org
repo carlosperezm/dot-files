@@ -7,7 +7,6 @@
 #+PROPERTY:    header-args:sh     :tangle no
 #+PROPERTY:    header-args:       :results silent   :eval no-export   :comments org
 
-
 * Technical Artifacts
 Need to provide the =init-org-mode= so that I can require this
 package.
@@ -18,7 +17,8 @@ package.
 
 Before you can build this on a new system, make sure that you put the cursor
 over any of these properties, and hit: =C-c C-c=
-* General
+* General look
+** Theme
 Adapted from [[https://github.com/mwfogleman/.emacs.d/blob/master/michael.org][mwfogleman/.emacs.d · GitHub]]
 The theming is derived from [[https://lepisma.github.io/2017/10/28/ricing-org-mode/][Ricing up Org Mode]]
 Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-org-mode-in-emacs/][Beautifying Org Mode in Emacs]]
@@ -50,7 +50,7 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
           org-startup-truncated nil
           org-startup-with-inline-images t
           org-completion-use-ido t
-          org-default-notes-file (concat org-directory "notes.org")
+          ;; org-default-notes-file (concat org-directory "notes.org")
           org-image-actual-width '(300)
           org-goto-max-level 10
           org-imenu-depth 5
@@ -84,6 +84,7 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
                         'org-link
                         'org-block
                         'org-table
+                        'org-date
                         'org-verbatim
                         'org-block-begin-line
                         'org-block-end-line
@@ -97,8 +98,7 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
     )
 #+END_SRC
 
-* Org bullets
-End
+** Org bullets
 #+BEGIN_SRC emacs-lisp
 (use-package org-bullets
   :ensure t
@@ -152,7 +152,6 @@ Create templates for properties
                          ":END:"
 )))
 
-
 #+END_SRC
 
 * Agenda
@@ -184,6 +183,9 @@ The entries in the list giving the custom command are:
 Create a template for SMART goals
 
 * Refile
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 Change org refile targets to be context dependent
 #+BEGIN_SRC emacs-lisp :results silent
 (defun my/org-refile-in-file (&optional prefix)
@@ -201,3 +203,421 @@ Keep clock times into a clocking drawer
 #+END_SRC
 
 End.
+
+* Tables
+
+#+BEGIN_SRC emacs-lisp
+(use-package orgtbl-aggregate
+  :ensure t
+  )
+#+END_SRC
+
+* Org-journal
+Use Howard Abrams config and [[https://github.com/rememberYou/.emacs.d/blob/master/config.org#journal][.emacs.d/config.org at master · rememberYou/.emacs.d · GitHub]]
+** Basic config
+#+BEGIN_SRC emacs-lisp
+(use-package org-journal
+  :ensure t
+  :after org
+  :bind (("C-c T" . org-journal-new-entry)
+         ("C-c Y" . journal-file-yesterday))
+  :preface
+  (defun get-journal-file-yesterday ()
+    "Gets filename for yesterday's journal entry."
+    (let* ((yesterday (time-subtract (current-time) (days-to-time 1)))
+           (daily-name (format-time-string "%Y%m%d" yesterday)))
+      (expand-file-name (concat org-journal-dir daily-name))))
+
+  (defun journal-file-yesterday ()
+    "Creates and load a file based on yesterday's date."
+    (interactive)
+    (find-file (get-journal-file-yesterday)))
+  :custom
+  (org-journal-date-format "%e %b %Y (%A)")
+  (org-journal-dir "~/journal/")
+  (org-journal-file-format "%Y%m%d")
+  (org-journal-time-format ""))
+#+END_SRC
+
+The time format is the heading for each section. I set it to a blank since I
+really don’t care about the time I add a section.
+
+** Auto insert a journal template
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+Nice to automatically insert a specific header if the journal entry file is
+empty using auto-insert.
+
+When I create a new journal entry, I want a snappy title and a checklist of
+daily tasks. The template should insert a date that matches the file’s name,
+not necessarily the current date.
+
+Also the inserted daily information and check-lists should only happen if I am
+creating today’s journal, not catching up with the past… oh, and we might have
+special dailies to be inserted based on the day of the week. Guess I could use
+YAS snippets, but then the code amount of code would over-shadow the text, so
+we’ll make a function.
+
+  To use this, make the following files:
+  - =journal-dailies.org= to contain the /real/ dailies
+  - =journal-dailies-end.org= to contain any follow-up notes
+  - =journal-mon.org= for additional text to be inserted on Monday journals
+  - And a =journal-XYZ.org= for each additional weekday
+
+#+BEGIN_SRC emacs-lisp
+(defun journal-file-insert ()
+  "Insert's the journal heading based on the file's name."
+  (interactive)
+  (let* ((year  (string-to-number (substring (buffer-name) 0 4)))
+         (month (string-to-number (substring (buffer-name) 4 6)))
+         (day   (string-to-number (substring (buffer-name) 6 8)))
+         (datim (encode-time 0 0 0 day month year)))
+
+    (insert (format-time-string org-journal-date-format datim))
+    (insert "\n\n  $0\n") ; Start with a blank separating line
+
+    ;; Note: The `insert-file-contents' leaves the cursor at
+    ;; the beginning, so the easiest approach is to insert
+    ;; these files in reverse order:
+
+    ;; If the journal entry I'm creating matches today's date:
+    (when (equal (file-name-base (buffer-file-name))
+                 (format-time-string "%Y%m%d"))
+      (insert-file-contents "journal-dailies-end.org")
+
+      ;; Insert dailies that only happen once a week:
+      (let ((weekday-template (downcase
+                               (format-time-string "journal-%a.org"))))
+        (when (file-exists-p weekday-template)
+          (insert-file-contents weekday-template)))
+      (insert-file-contents "journal-dailies.org")
+      (insert "$0")
+
+      (let ((contents (buffer-string)))
+        (delete-region (point-min) (point-max))
+        (yas-expand-snippet contents (point-min) (point-max))))))
+
+(define-auto-insert "/[0-9]\\{8\\}$" [journal-file-insert])
+
+
+#+END_SRC
+
+** Displaying last year's entry
+ I really would really like to read what I did last year "at this time", and by
+  that, I mean, 365 days ago, plus or minus a few to get to the same day of the
+  week.
+
+#+BEGIN_SRC emacs-lisp
+(defun journal-last-year-file ()
+  "Returns the string corresponding to the journal entry that
+    happened 'last year' at this same time (meaning on the same day
+    of the week)."
+  (let* ((last-year-seconds (- (float-time) (* 365 24 60 60)))
+         (last-year (seconds-to-time last-year-seconds))
+         ((looking-at )st-year-dow (nth 6 (decode-time last-year)))
+         (this-year-dow (nth 6 (decode-time)))
+         (difference (if (> this-year-dow last-year-dow)
+                         (- this-year-dow last-year-dow)
+                       (- last-year-dow this-year-dow)))
+         (target-date-seconds (+ last-year-seconds (* difference 24 60 60)))
+         (target-date (seconds-to-time target-date-seconds)))
+    (format-time-string "%Y%m%d" target-date)))
+
+(defun journal-last-year ()
+  "Loads last year's journal entry, which is not necessary the
+    same day of the month, but will be the same day of the week."
+  (interactive)
+  (let ((journal-file (concat org-journal-dir (journal-last-year-file))))
+    (find-file journal-file)))
+
+(global-set-key (kbd "C-c f L") 'journal-last-year)
+
+#+END_SRC
+
+* GTD
+** Introduction
+This system will I will implement a GTD system mainly based on [[http://www.howardism.org/Technical/Emacs/getting-boxes-done.html][Getting Boxes
+Done]] by Howard Abrams. I think it is maybe the first explanation that really
+clicks, so I hope it will be a good starting point
+
+** File organization
+First, a definition of all file destinations
+
+TODO: automatically create those directories
+
+#+BEGIN_SRC emacs-lisp
+(defvar org-default-projects-dir   "~/projects"                     "Primary GTD directory")
+(defvar org-default-technical-dir  "~/technical"                    "Directory of shareable notes")
+(defvar org-default-personal-dir   "~/personal"                     "Directory of un-shareable, personal notes")
+(defvar org-default-completed-dir  "~/projects/trophies"            "Directory of completed project files")
+(defvar org-default-inbox-file     "~/projects/breathe.org"         "New stuff collects in this file")
+(defvar org-default-tasks-file     "~/projects/tasks.org"           "Tasks, TODOs and little projects")
+(defvar org-default-incubate-file  "~/projects/incubate.org"        "Ideas simmering on back burner")
+(defvar org-default-completed-file nil                              "Ideas simmering on back burner")
+(defvar org-default-notes-file     "~/personal/general-notes.org"   "Non-actionable, personal notes")
+(defvar org-default-media-file     "~/projects/media.org"           "White papers and links to other things to check out")
+#+END_SRC 
+
+Add all the files in the projects directory as potential agenda files
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-files (list org-default-projects-dir))
+(setq org-agenda-file-regexp "^[a-z0-9-_]+.org")
+#+END_SRC
+
+** The inbox
+Everything beings in the inbox folder
+
+#+BEGIN_SRC emacs-lisp
+(defvar org-capture-templates (list))
+
+(add-to-list 'org-capture-templates
+             `("t" "Task Entry"        entry
+               (file ,org-default-inbox-file)
+               "* %?\n:PROPERTIES:\n:CREATED:%U\n:END:\n\n%i\n\nFrom: %a"
+               :empty-lines 1))
+
+#+END_SRC
+
+** Refiling
+
+#+BEGIN_SRC emacs-lisp :results silent
+(defhydra hydra-org-refiler (org-mode-map "C-c s" :hint nil)
+    "
+  ^Navigate^      ^Refile^       ^Move^           ^Update^        ^Go To^        ^Dired^
+  ^^^^^^^^^^---------------------------------------------------------------------------------------
+  _k_: ↑ previous _t_: tasks     _m X_: projects  _T_: todo task  _g t_: tasks    _g X_: projects
+  _j_: ↓ next     _i_: incubate  _m P_: personal  _S_: schedule   _g i_: incubate _g P_: personal
+  _c_: archive    _p_: personal  _m T_: technical _D_: deadline   _g x_: inbox    _g T_: technical
+  _d_: delete     _r_: refile                   _R_: rename     _g n_: notes    _g C_: completed
+  "
+    ("<up>" org-previous-visible-heading)
+    ("<down>" org-next-visible-heading)
+    ("k" org-previous-visible-heading)
+    ("j" org-next-visible-heading)
+    ("c" org-archive-subtree-as-completed)
+    ("d" org-cut-subtree)
+    ("t" org-refile-to-task)
+    ("i" org-refile-to-incubate)
+    ("p" org-refile-to-personal-notes)
+    ("r" org-refile)
+    ("m X" org-refile-to-projects-dir)
+    ("m P" org-refile-to-personal-dir)
+    ("m T" org-refile-to-technical-dir)
+    ("T" org-todo)
+    ("S" org-schedule)
+    ("D" org-deadline)
+    ("R" org-rename-header)
+    ("g t" (find-file-other-window org-default-tasks-file))
+    ("g i" (find-file-other-window org-default-incubate-file))
+    ("g x" (find-file-other-window org-default-inbox-file))
+    ("g c" (find-file-other-window org-default-completed-file))
+    ("g n" (find-file-other-window org-default-notes-file))
+    ("g X" (dired org-default-projects-dir))
+    ("g P" (dired org-default-personal-dir))
+    ("g T" (dired org-default-technical-dir))
+    ("g C" (dired org-default-completed-dir))
+    ("[\t]" (org-cycle))
+    ("s" (org-save-all-org-buffers) "save")
+    ("q" nil "quit"))
+
+(bind-key "C-c s" 'hydra-org-refiler/body)
+
+#+END_SRC
+
+To allow refiles as top level destination (investigate)
+
+#+BEGIN_SRC emacs-lisp
+(setq org-refile-use-outline-path 'file
+      org-outline-path-complete-in-steps nil)
+#+END_SRC
+
+Set all files in projects as refile targets.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-refile-targets (append '((org-default-media-file :level . 1)
+                                   (org-default-notes-file :level . 0))
+                                 (->>
+                                  (directory-files org-default-projects-dir nil ".org")
+                                  (-remove-item (file-name-base org-default-media-file))
+                                  (--remove (s-starts-with? "." it))
+                                  (--map (format "%s/%s" org-default-projects-dir it))
+                                  (--map `(,it :level . 0)))))
+
+#+END_SRC
+
+** Refiling programatically
+ can’t call org-refile programmatically with a file destination (as needed in
+ the hydra shown above), as it is only interactive. More problematic,
+ org-refile is a monolithic function, so I can’t call any helper functions it
+ might use. I currently see no other approach but to implement my own simpler
+ refiler.
+
+Copying regions is what Emacs does well…so, let’s define a region of a subtree:
+
+#+BEGIN_SRC emacs-lisp
+(defun org-subtree-region ()
+  "Return a list of the start and end of a subtree."
+  (save-excursion
+    (list (progn (org-back-to-heading) (point))
+          (progn (org-end-of-subtree)  (point)))))
+#+END_SRC
+
+Now we can use that function to kill the region of a subtree, open a file (the
+target destination), and insert the previous contents:
+
+#+BEGIN_SRC emacs-lisp
+(defun org-refile-directly (file-dest)
+  "Move the current subtree to the end of FILE-DEST.
+If SHOW-AFTER is non-nil, show the destination window,
+otherwise, this destination buffer is not shown."
+  (interactive "fDestination: ")
+
+  (defun dump-it (file contents)
+    (find-file-other-window file-dest)
+    (goto-char (point-max))
+    (insert "\n" contents))
+
+  (save-excursion
+    (let* ((region (org-subtree-region))
+           (contents (buffer-substring (first region) (second region))))
+      (apply 'kill-region region)
+      (if org-refile-directly-show-after
+          (save-current-buffer (dump-it file-dest contents))
+        (save-window-excursion (dump-it file-dest contents))))))
+
+(defvar org-refile-directly-show-after nil
+  "When refiling directly (using the `org-refile-directly'
+function), show the destination buffer afterwards if this is set
+to `t', otherwise, just do everything in the background.")
+
+#+END_SRC
+
+After moving a subtree, do I want to see the resulting buffer in a window? If
+so, I use save-current-buffer (shown above), otherwise, this function calls
+save-window-execursion. I haven’t decided which I like best, so I have a
+customization variable that I can change.
+
+Now, let’s create functions for the most-used refile destinations used by the
+Hydra (notice that the Hydra can also call org-refile directly in order to get
+access to all targets):
+
+#+BEGIN_SRC emacs-lisp
+(defun org-refile-to-incubate ()
+  "Refile (move) the current Org subtree to `org-default-incubate-file'."
+  (interactive)
+  (org-refile nil nil (list nil org-default-incubate-file nil nil)))
+
+(defun org-refile-to-task ()
+  "Refile (move) the current Org subtree to `org-default-tasks-file'."
+  (interactive)
+  (org-refile-directly org-default-tasks-file))
+
+(defun org-refile-to-personal-notes ()
+  "Refile (move) the current Org subtree to `org-default-notes-file'."
+  (interactive)
+  (org-refile-directly org-default-notes-file))
+
+(defun org-refile-to-completed ()
+  "Refile (move) the current Org subtree to `org-default-completed-file',
+unless it doesn't exist, in which case, refile to today's journal entry."
+  (interactive)
+  (if (and org-default-completed-file (file-exists-p org-default-completed-file))
+      (org-refile-directly org-default-completed-file)
+    (org-refile-directly (get-journal-file-today))))
+
+#+END_SRC
+
+** Scheduling and planning
+While reviewing the collected ideas in my Inbox, I often need to tidy them
+before moving them around. Add a TODO label to each task with T in my hydra, as
+well as schedule a date with an S (as a task without due date is just a
+wish). Before I move the subtree, I may need to change the header’s text (which
+I added to the hydra with an R key):
+
+#+BEGIN_SRC emacs-lisp
+(defun org-rename-header (label)
+  "Rename the current section's header to LABEL, and moves the
+point to the end of the line."
+  (interactive (list
+                (read-string "Header: "
+                             (substring-no-properties (org-get-heading t t t t)))))
+  (org-back-to-heading)
+  (replace-string (org-get-heading t t t t) label))
+
+#+END_SRC
+
+** Completing tasks
+This function archives a subtree to today’s journal entry (marking the task
+completed in the process):
+
+#+BEGIN_SRC emacs-lisp
+(defun org-archive-subtree-as-completed ()
+  "Archives the current subtree to today's current journal entry."
+  (interactive)
+  ;; According to the docs for `org-archive-subtree', the state should be
+  ;; automatically marked as DONE, but I don't notice that:
+  (when (org-get-todo-state)
+    (org-todo "DONE"))
+
+  (let* ((org-archive-file (or org-default-completed-file
+                               (todays-journal-entry)))
+         (org-archive-location (format "%s::" org-archive-file)))
+     (org-archive-subtree)))
+
+#+END_SRC
+
+The following function returns the filename of today’s journal entry (which I
+can use as a refile destination):
+
+#+BEGIN_SRC emacs-lisp
+(defun todays-journal-entry ()
+  "Return the full pathname to the day's journal entry file.
+Granted, this assumes each journal's file entry to be formatted
+with year/month/day, as in `20190104' for January 4th.
+
+Note: `org-journal-dir' variable must be set to the directory
+where all good journal entries live, e.g. ~/journal."
+  (let* ((daily-name   (format-time-string "%Y%m%d"))
+         (file-name    (concat org-journal-dir daily-name)))
+    (expand-file-name file-name)))
+
+#+END_SRC
+
+** Summary
+We now have a Hydra that easily kicks off functions that help keep my task
+inbox manageable. Each morning, I would like to start an environment when my
+Inbox is loaded and ready for refiling. The following function does that by
+calling functions I would normally do manually:
+
+#+BEGIN_SRC emacs-lisp
+(defun org-boxes-workflow ()
+  "Load the default tasks file and start our hydra on the first task shown."
+  (interactive)
+  (let ((org-startup-folded nil))
+    (find-file org-default-inbox-file)
+    (delete-other-windows)
+    (ignore-errors
+      (ha/org-agenda))
+    (delete-other-windows)
+    (split-window-right-and-focus)
+    (pop-to-buffer (get-file-buffer org-default-inbox-file))
+    (goto-char (point-min))
+    (org-next-visible-heading 1)
+    (hydra-org-refiler/body)))
+
+#+END_SRC
+
+This assumes that I have a special agenda display:
+
+#+BEGIN_SRC emacs-lisp
+(defun cp/org-agenda ()
+  "Displays my favorite agenda perspective."
+  (interactive)
+  (org-agenda nil "a")
+  (get-buffer "*Org Agenda*")
+  (execute-kbd-macro (kbd "A t")))
+
+#+END_SRC
+
