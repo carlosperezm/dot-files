@@ -148,6 +148,24 @@ Set priorities of packages. Higher values are searched first
   (message "Loaded packages in %.3fs" elapsed))
 #+END_SRC
 
+** Init file support
+Load up a collection of enhancements to Emacs Lisp, including dash, s for
+string manipulation, and f for file manipulation.
+#+BEGIN_SRC emacs-lisp
+(require 'cl)
+
+(use-package dash
+  :ensure t
+  :config (eval-after-load "dash" '(dash-enable-font-lock)))
+
+(use-package s
+  :ensure t)
+
+(use-package f
+  :ensure t)
+
+#+END_SRC
+
 * Function definitions
 ** Terminal or GUI
 
@@ -872,64 +890,6 @@ Add this to fix could not find ditaa.jar
 
 #+END_SRC
 
-** Capture
-
-#+BEGIN_SRC emacs-lisp :results silent
-(setq org-capture-templates
-
-      '(("p" "Personal templates") ("w" "work templates")
-
-        ("pt" "Todo entry"  entry
-         (file+headline "~/Documents/GTD/personal.org" "Capture")
-         (file "~/Documents/GTD/tpl-todo.txt")
-         :empty-lines 1 :prepend t)
-
-        ("n" "Thought or Note"  entry
-          (file+headline "~/Documents/GTD/ideas.org" "Capture")
-          "* %?\n\n  %i\n\n  See: %a" :empty-lines 1)
-
-        ("pd" "Daily Plan" plain (file+olp+datetree "~/Documents/GTD/personal-dailyPlan.org")
-         (file "~/Documents/GTD/tpl-dailyPlan.txt") :immediate-finish t)
-
-        ("b" "Book"  entry
-         (file+headline "~/Documents/GTD/references.org" "Capture")
-         (file "~/Documents/GTD/tpl-books.txt")
-         :empty-lines 1)
-
-        ("k" "Bookmarks"  entry
-         (file+headline "~/Documents/GTD/references.org" "Bookmarks")
-         (file "~/Documents/GTD/tpl-bookmarks.txt")
-         :empty-lines 1 :prepend t)
-        
-        ("j" "Journal entry" item (file+olp+datetree
-                                     "~/Documents/GTD/journal.org")
-         "%^{Activity}")
-        
-        
-        ("wt" "Todo entry"  entry
-         (file+headline "~/Documents/GTD/work.org" "Capture")
-         (file "~/Documents/GTD/tpl-todo.txt")
-         :empty-lines 1)
-
-        ("g" "goal"  entry
-         (file+headline "~/Documents/GTD/goals.org" "Capture")
-         (file "~/Documents/GTD/tpl-goals.txt")
-         :empty-lines 1 :prepend t)
-
-      ))
-#+END_SRC
-
-** Refile
-
-Set up the targets:
-#+BEGIN_SRC emacs-lisp :results silent
-(setq org-refile-targets '(("~/Documents/GTD/personal.org" :maxlevel . 4)
-                           ("~/Documents/GTD/work.org" :maxlevel . 4)
-                           ;;("~/" :level . 2)
-                           ))
-
-#+END_SRC
-
 ** Id links
 
 #+BEGIN_SRC emacs-lisp :results silent
@@ -1293,6 +1253,32 @@ This package allows to have a single org file and different export options.
 )
 #+END_SRC
 
+* Hydra
+#+BEGIN_SRC emacs-lisp
+(use-package hydra
+  :config
+  (setq hydra-lv nil))
+
+#+END_SRC
+
+A zooming hydra
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-zoom ()
+  "zoom"
+  ("+" text-scale-increase "in")
+  ("=" text-scale-increase "in")
+  ("-" text-scale-decrease "out")
+  ("_" text-scale-decrease "out")
+  ("0" (text-scale-adjust 0) "reset")
+  ("q" nil "quit" :color blue))
+
+(bind-keys ("C-x C-0" . hydra-zoom/body)
+           ("C-x C-=" . hydra-zoom/body)
+           ("C-x C--" . hydra-zoom/body)
+           ("C-x C-+" . hydra-zoom/body))
+
+#+END_SRC
 
 * Final configuration
 Before we finish, we need to check if there is a local file for us to load
