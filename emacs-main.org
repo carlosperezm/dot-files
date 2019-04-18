@@ -758,7 +758,11 @@ Drag and drop images to Emacs org-mode
   :ensure t)
 #+END_SRC
 
-** Org-reveal
+** TODO Org-reveal
+No longer mantained, need to change to org-re-reveal
+:PROPERTIES:
+:header-args:    :tangle no
+:END:
 
 #+BEGIN_SRC emacs-lisp :results silent
 
