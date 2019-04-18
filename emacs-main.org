@@ -866,18 +866,6 @@ Add this to fix could not find ditaa.jar
 
 #+END_SRC
 
-** Agenda
-
-#+BEGIN_SRC emacs-lisp :results silent
-;; set key for agenda and capture
-;; file to save todo items
-(setq org-agenda-files '("~/Documents/GTD/work.org"
-                         "~/Documents/GTD/personal.org"))
-
-;;finish
-
-#+END_SRC
-   
 ** Links
 
 #+BEGIN_SRC emacs-lisp :results silent
