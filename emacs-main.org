@@ -1272,6 +1272,17 @@ A zooming hydra
 
 #+END_SRC
 
+* Auto-insert
+   #+BEGIN_SRC emacs-lisp
+     (use-package autoinsert
+       :init
+       ;; Don't want to be prompted before insertion:
+       (setq auto-insert-query nil)
+
+       (add-hook 'find-file-hook 'auto-insert)
+       (auto-insert-mode 1))
+   #+END_SRC
+
 * Final configuration
 Before we finish, we need to check if there is a local file for us to load
 and evaluate.  We assume the local file has been tangled and provides the
