@@ -72,6 +72,9 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
           org-fontify-whole-heading-line t
           org-fontify-done-headline t
           org-fontify-quote-and-verse-blocks t) 
+
+    (add-to-list 'auto-mode-alist '("\\.txt\\'" . org-mode))
+    (add-to-list 'auto-mode-alist '(".*/[0-9]*$" . org-mode))   ;; Journal
     
     (add-hook 'org-mode-hook
               '(lambda ()
@@ -213,126 +216,68 @@ End.
 #+END_SRC
 
 * Org-journal
-Use Howard Abrams config and [[https://github.com/rememberYou/.emacs.d/blob/master/config.org#journal][.emacs.d/config.org at master · rememberYou/.emacs.d · GitHub]]
 ** Basic config
-#+BEGIN_SRC emacs-lisp
-(use-package org-journal
-  :ensure t
-  :after org
-  :bind (("C-c T" . org-journal-new-entry)
-         ("C-c Y" . journal-file-yesterday))
-  :preface
-  (defun get-journal-file-yesterday ()
-    "Gets filename for yesterday's journal entry."
-    (let* ((yesterday (time-subtract (current-time) (days-to-time 1)))
-           (daily-name (format-time-string "%Y%m%d" yesterday)))
-      (expand-file-name (concat org-journal-dir daily-name))))
 
-  (defun journal-file-yesterday ()
-    "Creates and load a file based on yesterday's date."
-    (interactive)
-    (find-file (get-journal-file-yesterday)))
-  :custom
-  (org-journal-date-format "%e %b %Y (%A)")
-  (org-journal-dir "~/journal/")
-  (org-journal-file-format "%Y%m%d")
-  (org-journal-time-format ""))
+#+BEGIN_SRC emacs-lisp
+  (use-package org-journal
+    :ensure t
+    :defer t
+    :after org
+    :bind ("C-c f j" . org-journal-new-entry)
+    :custom
+    (org-journal-date-format "%e %b %Y (%A)")
+    (org-journal-dir "~/journal/")
+    (org-journal-file-format "%Y%m%d")
+    (org-journal-time-format "")
+    (org-journal-date-prefix "#+TITLE: ")
+    )
+
 #+END_SRC
 
 The time format is the heading for each section. I set it to a blank since I
 really don’t care about the time I add a section.
-
-** Auto insert a journal template
-:PROPERTIES:
-:header-args: :tangle no
-:END:
-Nice to automatically insert a specific header if the journal entry file is
-empty using auto-insert.
-
-When I create a new journal entry, I want a snappy title and a checklist of
-daily tasks. The template should insert a date that matches the file’s name,
-not necessarily the current date.
-
-Also the inserted daily information and check-lists should only happen if I am
-creating today’s journal, not catching up with the past… oh, and we might have
-special dailies to be inserted based on the day of the week. Guess I could use
-YAS snippets, but then the code amount of code would over-shadow the text, so
-we’ll make a function.
-
-  To use this, make the following files:
-  - =journal-dailies.org= to contain the /real/ dailies
-  - =journal-dailies-end.org= to contain any follow-up notes
-  - =journal-mon.org= for additional text to be inserted on Monday journals
-  - And a =journal-XYZ.org= for each additional weekday
+** TODO Template
+This template is intended to insert a basic dailies list automatically into
+each journal file. Unfortunately, it seems to break other functionality, so I
+decided to leave it only as a reference and stick to a basic
+~org-journal-date-format~
 
 #+BEGIN_SRC emacs-lisp
-(defun journal-file-insert ()
-  "Insert's the journal heading based on the file's name."
-  (interactive)
-  (let* ((year  (string-to-number (substring (buffer-name) 0 4)))
-         (month (string-to-number (substring (buffer-name) 4 6)))
-         (day   (string-to-number (substring (buffer-name) 6 8)))
-         (datim (encode-time 0 0 0 day month year)))
+  (defun org-journal-date-format-func (time)
+    "Custom function to insert journal date header,
+  and some custom text on a newly created journal file."
+    (when (= (buffer-size) 0)
+      (insert (format-time-string "#+TITLE: Journal Entry- %e %b %Y (%A)" time))
+      (insert "\n\n\n* Dailies
+     + [ ] The 3 most important tasks [0/3]
+        - [ ]
+        - [ ]
+        - [ ] 
+     + [ ] Other tasks that are in the system [0/2]
+        - [ ]
+        - [ ]
+     + [ ] ToDos which are not tracked by my system [0/1]
+        - [ ]
+  \n\n* Diary")
+      ))
 
-    (insert (format-time-string org-journal-date-format datim))
-    (insert "\n\n  $0\n") ; Start with a blank separating line
-
-    ;; Note: The `insert-file-contents' leaves the cursor at
-    ;; the beginning, so the easiest approach is to insert
-    ;; these files in reverse order:
-
-    ;; If the journal entry I'm creating matches today's date:
-    (when (equal (file-name-base (buffer-file-name))
-                 (format-time-string "%Y%m%d"))
-      (insert-file-contents "journal-dailies-end.org")
-
-      ;; Insert dailies that only happen once a week:
-      (let ((weekday-template (downcase
-                               (format-time-string "journal-%a.org"))))
-        (when (file-exists-p weekday-template)
-          (insert-file-contents weekday-template)))
-      (insert-file-contents "journal-dailies.org")
-      (insert "$0")
-
-      (let ((contents (buffer-string)))
-        (delete-region (point-min) (point-max))
-        (yas-expand-snippet contents (point-min) (point-max))))))
-
-(define-auto-insert "/[0-9]\\{8\\}$" [journal-file-insert])
-
-
+  ;; (setq org-journal-date-format 'org-journal-date-format-func)
 #+END_SRC
 
-** Displaying last year's entry
- I really would really like to read what I did last year "at this time", and by
-  that, I mean, 365 days ago, plus or minus a few to get to the same day of the
-  week.
+** Capture 
+This capture automatically inserts an entry into today's journal file.
 
 #+BEGIN_SRC emacs-lisp
-(defun journal-last-year-file ()
-  "Returns the string corresponding to the journal entry that
-    happened 'last year' at this same time (meaning on the same day
-    of the week)."
-  (let* ((last-year-seconds (- (float-time) (* 365 24 60 60)))
-         (last-year (seconds-to-time last-year-seconds))
-         ((looking-at )st-year-dow (nth 6 (decode-time last-year)))
-         (this-year-dow (nth 6 (decode-time)))
-         (difference (if (> this-year-dow last-year-dow)
-                         (- this-year-dow last-year-dow)
-                       (- last-year-dow this-year-dow)))
-         (target-date-seconds (+ last-year-seconds (* difference 24 60 60)))
-         (target-date (seconds-to-time target-date-seconds)))
-    (format-time-string "%Y%m%d" target-date)))
+  (defun org-journal-find-location ()
+    ;; Open today's journal, but specify a non-nil prefix argument in order to
+    ;; inhibit inserting the heading; org-capture will insert the heading.
+    (org-journal-new-entry t)
+    ;; Position point on the journal's top-level heading so that org-capture
+    ;; will add the new entry as a child entry.
+    (goto-char (point-min)))
 
-(defun journal-last-year ()
-  "Loads last year's journal entry, which is not necessary the
-    same day of the month, but will be the same day of the week."
-  (interactive)
-  (let ((journal-file (concat org-journal-dir (journal-last-year-file))))
-    (find-file journal-file)))
-
-(global-set-key (kbd "C-c f L") 'journal-last-year)
-
+  (setq org-capture-templates '(("j" "Journal entry" entry (function org-journal-find-location)
+                                 "* %(format-time-string org-journal-time-format)%^{Title}\n%i%?\nFrom: %a")))
 #+END_SRC
 
 * GTD
@@ -344,44 +289,85 @@ clicks, so I hope it will be a good starting point
 ** File organization
 First, a definition of all file destinations
 
-TODO: automatically create those directories
-
 #+BEGIN_SRC emacs-lisp
-(defvar org-default-projects-dir   "~/projects"                     "Primary GTD directory")
-(defvar org-default-technical-dir  "~/technical"                    "Directory of shareable notes")
-(defvar org-default-personal-dir   "~/personal"                     "Directory of un-shareable, personal notes")
-(defvar org-default-completed-dir  "~/projects/trophies"            "Directory of completed project files")
-(defvar org-default-inbox-file     "~/projects/breathe.org"         "New stuff collects in this file")
-(defvar org-default-tasks-file     "~/projects/tasks.org"           "Tasks, TODOs and little projects")
-(defvar org-default-incubate-file  "~/projects/incubate.org"        "Ideas simmering on back burner")
-(defvar org-default-completed-file nil                              "Ideas simmering on back burner")
-(defvar org-default-notes-file     "~/personal/general-notes.org"   "Non-actionable, personal notes")
-(defvar org-default-media-file     "~/projects/media.org"           "White papers and links to other things to check out")
+(defvar org-default-myfiles-dir
+  "~/Dropbox/my_files/"
+  "Root directory.")
+
+(defvar org-default-projects-dir
+  (concat org-default-myfiles-dir  "projects/")
+  "Primary GTD directory.")
+
+(defvar org-default-technical-dir
+  (concat org-default-myfiles-dir  "technical/")
+  "Directory of shareable notes.")
+
+(defvar org-default-personal-dir
+  (concat org-default-myfiles-dir  "personal/")
+  "Directory of un-shareable, personal notes.")
+
+(defvar org-default-completed-dir
+  (concat org-default-projects-dir "trophies/")
+  "Directory of completed project files.")
+
+(defvar org-default-inbox-file
+  (concat org-default-projects-dir "breathe.org")
+  "New stuff collects in this file.")
+
+(defvar org-default-tasks-file
+  (concat org-default-projects-dir "tasks.org")
+  "Tasks, TODOs and little projects.")
+
+(defvar org-default-incubate-file
+  (concat org-default-projects-dir "incubate.org")
+  "Ideas simmering on backburner.")
+  
+(defvar org-default-completed-file
+  nil
+  "Ideas simmering on back burner.")
+
+(defvar org-default-notes-file
+  (concat org-default-personal-dir "general-notes.org")
+  "Non-actionable, personal notes.")
+
+(defvar org-default-media-file
+  (concat org-default-projects-dir "media.org")
+  "White papers and links to other things to check out.")
 #+END_SRC 
 
-Add all the files in the projects directory as potential agenda files
+Add all the files in the ~projects~ directory as potential agenda files
 
 #+BEGIN_SRC emacs-lisp
 (setq org-agenda-files (list org-default-projects-dir))
 (setq org-agenda-file-regexp "^[a-z0-9-_]+.org")
 #+END_SRC
 
+*** TODO automatically create directories
+Maybe should not be a problem if using Dropbox, as it gets synchronized. Only
+need to change the ~org-deafult-myfiles-dir~
+
 ** The inbox
 Everything beings in the inbox folder
 
 #+BEGIN_SRC emacs-lisp
-(defvar org-capture-templates (list))
+  (defvar org-capture-templates (list))
 
-(add-to-list 'org-capture-templates
-             `("t" "Task Entry"        entry
-               (file ,org-default-inbox-file)
-               "* %?\n:PROPERTIES:\n:CREATED:%U\n:END:\n\n%i\n\nFrom: %a"
-               :empty-lines 1))
+  (add-to-list 'org-capture-templates
+               `("t" "Task Entry"        entry
+                 (file ,org-default-inbox-file)
+                 "* %?\n:PROPERTIES:\n:CREATED:%U\n:END:\n\n%i\n\nFrom: %a"
+                 :empty-lines 1))
+
+  (add-to-list 'org-capture-templates
+               `("k" "Bookmarks"  entry
+                 (file ,org-default-inbox-file)
+                 ("* %(org-cliplink-capture)\n:PROPERTIES:\n:CREATED:%U\n:END:\n%?")
+                 :empty-lines 1 :prepend t))
 
 #+END_SRC
 
 ** Refiling
-
+*** Hydra menu
 #+BEGIN_SRC emacs-lisp :results silent
 (defhydra hydra-org-refiler (org-mode-map "C-c s" :hint nil)
     "
@@ -426,7 +412,7 @@ Everything beings in the inbox folder
 
 #+END_SRC
 
-To allow refiles as top level destination (investigate)
+*** TODO Allow refiles as top level destination
 
 #+BEGIN_SRC emacs-lisp
 (setq org-refile-use-outline-path 'file
@@ -448,57 +434,6 @@ Set all files in projects as refile targets.
 #+END_SRC
 
 ** Refiling programatically
- can’t call org-refile programmatically with a file destination (as needed in
- the hydra shown above), as it is only interactive. More problematic,
- org-refile is a monolithic function, so I can’t call any helper functions it
- might use. I currently see no other approach but to implement my own simpler
- refiler.
-
-Copying regions is what Emacs does well…so, let’s define a region of a subtree:
-
-#+BEGIN_SRC emacs-lisp
-(defun org-subtree-region ()
-  "Return a list of the start and end of a subtree."
-  (save-excursion
-    (list (progn (org-back-to-heading) (point))
-          (progn (org-end-of-subtree)  (point)))))
-#+END_SRC
-
-Now we can use that function to kill the region of a subtree, open a file (the
-target destination), and insert the previous contents:
-
-#+BEGIN_SRC emacs-lisp
-(defun org-refile-directly (file-dest)
-  "Move the current subtree to the end of FILE-DEST.
-If SHOW-AFTER is non-nil, show the destination window,
-otherwise, this destination buffer is not shown."
-  (interactive "fDestination: ")
-
-  (defun dump-it (file contents)
-    (find-file-other-window file-dest)
-    (goto-char (point-max))
-    (insert "\n" contents))
-
-  (save-excursion
-    (let* ((region (org-subtree-region))
-           (contents (buffer-substring (first region) (second region))))
-      (apply 'kill-region region)
-      (if org-refile-directly-show-after
-          (save-current-buffer (dump-it file-dest contents))
-        (save-window-excursion (dump-it file-dest contents))))))
-
-(defvar org-refile-directly-show-after nil
-  "When refiling directly (using the `org-refile-directly'
-function), show the destination buffer afterwards if this is set
-to `t', otherwise, just do everything in the background.")
-
-#+END_SRC
-
-After moving a subtree, do I want to see the resulting buffer in a window? If
-so, I use save-current-buffer (shown above), otherwise, this function calls
-save-window-execursion. I haven’t decided which I like best, so I have a
-customization variable that I can change.
-
 Now, let’s create functions for the most-used refile destinations used by the
 Hydra (notice that the Hydra can also call org-refile directly in order to get
 access to all targets):
@@ -512,20 +447,21 @@ access to all targets):
 (defun org-refile-to-task ()
   "Refile (move) the current Org subtree to `org-default-tasks-file'."
   (interactive)
-  (org-refile-directly org-default-tasks-file))
+  (org-refile nil nil (list nil org-default-tasks-file nil nil)))
 
 (defun org-refile-to-personal-notes ()
   "Refile (move) the current Org subtree to `org-default-notes-file'."
   (interactive)
-  (org-refile-directly org-default-notes-file))
+  (org-refile nil nil (list nil org-default-notes-file nil nil)))
 
 (defun org-refile-to-completed ()
   "Refile (move) the current Org subtree to `org-default-completed-file',
 unless it doesn't exist, in which case, refile to today's journal entry."
   (interactive)
-  (if (and org-default-completed-file (file-exists-p org-default-completed-file))
-      (org-refile-directly org-default-completed-file)
-    (org-refile-directly (get-journal-file-today))))
+  (if (and org-default-completed-file (file-exists-p
+                                       org-default-completed-file))
+      (org-refile nil nil (list nil org-default-completed-file nil nil))
+    (org-refile nil nil (list nil get-journal-file-today nil nil))))
 
 #+END_SRC
 
@@ -585,6 +521,196 @@ where all good journal entries live, e.g. ~/journal."
 
 #+END_SRC
 
+** TODO Refiling trees to files
+For now, I am just copying the functions stated in this essay: [[http://www.howardism.org/Technical/Emacs/getting-even-more-boxes-done.html][Refiling Trees
+to Files]]
+I will review the code to understand it and then customize to my needs.
+
+#+BEGIN_SRC emacs-lisp
+(defun org-subtree-metadata ()
+  "Return a list of key aspects of an org-subtree. Includes the
+following: header text, body contents, list of tags, region list
+of the start and end of the subtree."
+  (save-excursion
+    ;; Jump to the parent header if not already on a header
+    (when (not (org-at-heading-p))
+      (org-previous-visible-heading 1))
+
+    (let* ((context (org-element-context))
+           (attrs   (second context))
+           (props   (org-entry-properties)))
+
+      (list :region     (list (plist-get attrs :begin) (plist-get attrs :end))
+            :header     (plist-get attrs :title)
+            :tags       (org-get-subtree-tags props)
+            :properties (org-get-subtree-properties attrs)
+            :body       (org-get-subtree-content attrs)))))
+
+(defun org-get-subtree-tags (&optional props)
+  "Given the properties, PROPS, from a call to
+`org-entry-properties', return a list of tags."
+  (unless props
+     (setq props (org-entry-properties)))
+  (let ((tag-label (if org-get-subtree-tags-inherited "ALLTAGS" "TAGS")))
+    (-some->> props
+         (assoc tag-label)
+         cdr
+         substring-no-properties
+         (s-split ":")
+         (--filter (not (equalp "" it))))))
+
+(defvar org-get-subtree-tags-inherited t
+  "Returns a subtree's tags, and all tags inherited (from tags
+  specified in parents headlines or on the file itself). Defaults
+  to true.")
+
+(defun org-get-subtree-properties (attributes)
+  "Return a list of tuples of a subtrees properties where the keys are strings."
+
+  (defun symbol-upcase? (sym)
+    (let ((case-fold-search nil))
+      (string-match-p "^:[A-Z]+$" (symbol-name sym))))
+
+  (defun convert-tuple (tup)
+    (let ((key (first tup))
+          (val (second tup)))
+      (list (substring (symbol-name key) 1) val)))
+
+  (->> attributes
+       (-partition 2)                         ; Convert plist to list of tuples
+       (--filter (symbol-upcase? (first it))) ; Remove lowercase tuples
+       (-map 'convert-tuple)))
+
+(defun org-get-subtree-content (attributes)
+  "Return the contents of the current subtree as a string."
+  (let ((header-components '(clock diary-sexp drawer headline inlinetask
+                             node-property planning property-drawer section)))
+
+      (goto-char (plist-get attributes :contents-begin))
+
+      ;; Walk down past the properties, etc.
+      (while
+          (let* ((cntx (org-element-context))
+                 (elem (first cntx))
+                 (props (second cntx)))
+            (when (member elem header-components)
+              (goto-char (plist-get props :end)))))
+
+      ;; At this point, we are at the beginning of what we consider
+      ;; the contents of the subtree, so we can return part of the buffer:
+      (buffer-substring-no-properties (point) (org-end-of-subtree))))
+
+(defun org-refile-subtree-to-file (dir)
+  "Archive the org-mode subtree and create an entry in the
+directory folder specified by DIR. It attempts to move as many of
+the subtree's properties and other features to the new file."
+  (interactive "DDestination: ")
+  (let* ((props      (org-subtree-metadata))
+         (head       (plist-get props :header))
+         (body       (plist-get props :body))
+         (tags       (plist-get props :tags))
+         (properties (plist-get props :properties))
+         (area       (plist-get props :region))
+         (filename   (org-filename-from-title head))
+         (filepath   (format "%s/%s.org" dir filename)))
+    (apply #'delete-region area)
+    (org-create-org-file filepath head body tags properties)))
+
+(defun org-create-org-file (filepath header body tags properties)
+  "Create a new Org file by FILEPATH. The contents of the file is
+pre-populated with the HEADER, BODY and any associated TAGS."
+  (find-file-other-window filepath)
+  (org-set-file-property "TITLE" header t)
+  (when tags
+    (org-set-file-property "FILETAGS" (s-join " " tags)))
+
+  ;; Insert any drawer properties as #+PROPERTY entries:
+  (when properties
+    (goto-char (point-min))
+    (or (re-search-forward "^\s*$" nil t) (point-max))
+    (--map (insert (format "#+PROPERTY: %s %s" (first it) (second it))) properties))
+
+  ;; My auto-insert often adds an initial headline for a subtree, and in this
+  ;; case, I don't want that... Yeah, this isn't really globally applicable,
+  ;; but it shouldn't cause a problem for others.
+  (when (re-search-forward "^\\* [0-9]$" nil t)
+    (replace-match ""))
+
+  (delete-blank-lines)
+  (goto-char (point-max))
+  (insert "\n")
+  (insert body))
+
+(defun org-filename-from-title (title)
+  "Creates a useful filename based on a header string, TITLE.
+For instance, given the string:    What's all this then?
+     This function will return:    whats-all-this-then"
+  (let* ((no-letters (rx (one-or-more (not alphanumeric))))
+         (init-try (->> title
+                        downcase
+                        (replace-regexp-in-string "'" "")
+                        (replace-regexp-in-string no-letters "-"))))
+    (string-trim init-try "-+" "-+")))
+
+(defun org-set-file-property (key value &optional spot)
+  "Make sure file contains a top-level, file-wide property.
+KEY is something like `TITLE' or `FILETAGS'. This function makes
+sure that the property contains the contents of VALUE, and if the
+file doesn't have the property, it is inserted at either SPOT, or
+if nil,the top of the file."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((case-fold-search t))
+      (if (re-search-forward (format "^#\\+%s:\s*\\(.*\\)" key) nil t)
+          (replace-match value nil nil nil 1)
+
+        (cond
+         ;; if SPOT is a number, go to it:
+         ((numberp spot) (goto-char spot))
+         ;; If SPOT is not given, jump to first blank line:
+         ((null spot) (progn (goto-char (point-min))
+                             (re-search-forward "^\s*$" nil t)))
+         (t (goto-char (point-min))))
+
+        (insert (format "#+%s: %s\n" (upcase key) value))))))
+
+(defun org-refile-to-projects-dir ()
+  "Move the current subtree to a file in the `projects' directory."
+  (interactive)
+  (org-refile-subtree-to-file org-default-projects-dir))
+
+(defun org-refile-to-technical-dir ()
+  "Move the current subtree to a file in the `technical' directory."
+  (interactive)
+  (org-refile-subtree-to-file org-default-technical-dir))
+
+(define-auto-insert "/personal/*\\.org" ["personal.org" ha/autoinsert-yas-expand])
+
+(defun org-refile-to-personal-dir ()
+  "Move the current subtree to a file in the `personal' directory."
+  (interactive)
+  (org-refile-subtree-to-file org-default-personal-dir))
+
+
+#+END_SRC
+
+
+*** Old version
+#+BEGIN_SRC emacs-lisp
+(defun cp/org-refile-subtree-as-file (dir)
+  "Archive the org-mode subtree and create an entry in the directory folder specified by DIR.
+The formatting, since it is an archive, isn't quite what I want,but it gets it going."
+  (let* ((header (substring-no-properties (org-get-heading)))
+         (title (if (string-match ": \\(.*\\)" header)
+                    (match-string 1 header)
+                  header))
+         (filename (replace-regexp-in-string "\s+" "-" (downcase title)))
+         (filepath (format "%s/%s.org" dir filename))
+         (org-archive-location (format "%s::" filepath)))
+    (org-archive-subtree)
+    (find-file-other-window filepath)))
+#+END_SRC
+
 ** Summary
 We now have a Hydra that easily kicks off functions that help keep my task
 inbox manageable. Each morning, I would like to start an environment when my
@@ -599,7 +725,7 @@ calling functions I would normally do manually:
     (find-file org-default-inbox-file)
     (delete-other-windows)
     (ignore-errors
-      (ha/org-agenda))
+      (cp/org-agenda))
     (delete-other-windows)
     (split-window-right-and-focus)
     (pop-to-buffer (get-file-buffer org-default-inbox-file))
@@ -620,4 +746,3 @@ This assumes that I have a special agenda display:
   (execute-kbd-macro (kbd "A t")))
 
 #+END_SRC
-
