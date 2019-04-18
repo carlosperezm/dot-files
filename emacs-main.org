@@ -1288,13 +1288,13 @@ Before we finish, we need to check if there is a local file for us to load
 and evaluate.  We assume the local file has been tangled and provides the
 =init-local= key:
 
-#+BEGIN_SRC elisp
+#+BEGIN_SRC emacs-lisp
 (require 'init-local nil t)
 #+END_SRC
 
 After the first load, we can reload this with a require:
 
-   #+BEGIN_SRC elisp
+   #+BEGIN_SRC emacs-lisp
 (provide 'init-main)
    #+END_SRC
 
