@@ -20,7 +20,7 @@ I have also adapted the approach from Howard Abrams in [[https://github.com/howa
 
 To "load" the contents of this file, add the following to =$HOME/.init.el=:
 
-#+BEGIN_SRC elisp :tangle no
+#+BEGIN_SRC elisp :tangle ~/.emacs.d/init.el
 ;; Load our Literate Programming version of our Dot Emacs
 ;; file, from file: ~/dot-files/emacs.org
 (load-file "~/.emacs.d/elisp/init-main.el")
