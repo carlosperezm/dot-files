@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: obipy
+# key: obipy
+# --
+
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+$0
+#+END_SRC

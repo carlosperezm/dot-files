@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: Dailies Template
+# key: dail
+# --
+
+* Dailies
++ [ ] The 3 most important tasks [0/3]
+  - [ ] $0
+  - [ ] 
+  - [ ] 
++ [ ] Other tasks that are in the system [0/2]
+  - [ ] 
+  - [ ] 
++ [ ] ToDos which are not tracked by my system [0/1]
+  - [ ]
