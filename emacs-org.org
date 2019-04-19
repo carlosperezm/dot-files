@@ -41,6 +41,8 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
     (org-level-2 ((t (:foreground "#090909" :weight normal :height 1.3))))
     (org-level-3 ((t (:foreground "#090909" :weight normal :height 1.2))))
     (org-image-actual-width '(600))
+    (org-indent((t (:inherit (org-hide fixed-pitch)))))
+
 
     :init
     (setq default-major-mode 'org-mode
@@ -746,3 +748,4 @@ This assumes that I have a special agenda display:
   (execute-kbd-macro (kbd "A t")))
 
 #+END_SRC
+
