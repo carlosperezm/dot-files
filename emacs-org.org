@@ -147,18 +147,6 @@ To make quicknotes inside a logbook drawer
 (setq org-log-into-drawer t)
 #+END_SRC
 
-Create templates for properties
-
-#+BEGIN_SRC emacs-lisp :results silent
-(add-to-list 'org-structure-template-alist
-             (list "pp" (concat
-                         ":PROPERTIES:\n"
-                         ":State: ?\n"
-                         ":END:"
-)))
-
-#+END_SRC
-
 * Agenda
 ** Custom views
 The entries in the list giving the custom command are:
@@ -371,7 +359,7 @@ Everything beings in the inbox folder
 ** Refiling
 *** Hydra menu
 #+BEGIN_SRC emacs-lisp :results silent
-(defhydra hydra-org-refiler (org-mode-map "C-c s" :hint nil)
+(defhydra hydra-org-refiler (global-map "C-c s" :hint nil)
     "
   ^Navigate^      ^Refile^       ^Move^           ^Update^        ^Go To^        ^Dired^
   ^^^^^^^^^^---------------------------------------------------------------------------------------
