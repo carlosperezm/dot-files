@@ -18,6 +18,12 @@ It was inspired by Daniel Mai's config
 
 I have also adapted the approach from Howard Abrams in [[https://github.com/howardabrams/dot-files/blob/master/emacs.org][github]]
 
+Other useful configs:
+ - [[https://gist.github.com/nilsdeppe/7645c096d93b005458d97d6874a91ea9][My Emacs init file · GitHub]]
+ - [[https://github.com/a13/emacs.d][GitHub - a13/emacs.d]]
+ - [[https://github.com/skeeto/.emacs.d/blob/master/init.el][.emacs.d/init.el at master · skeeto/.emacs.d · GitHub]]
+ - [[http://aaronbedra.com/emacs.d/][Aaron Bedra]]
+
 To "load" the contents of this file, add the following to =$HOME/.init.el=:
 
 #+BEGIN_SRC elisp :tangle ~/.emacs.d/init.el
@@ -72,6 +78,25 @@ at: =$HOME/.emacs.d/elisp=
 (add-to-list 'load-path (my/emacs-subdirectory "elisp"))
 #+END_SRC
 
+** Custom-file
+#+BEGIN_SRC emacs-lisp
+;; keep customize settings in their own file
+(setq custom-file "~/.emacs.d/custom.el")
+(when (file-exists-p custom-file)
+  (load custom-file))
+#+END_SRC
+
+** Backups
+This is one of the things people usually want to change right away.
+By default, Emacs saves backup files in the current directory. These
+are the files ending in ~ that are cluttering up your directory
+lists. The following code stashes them all in ~/.emacs.d/backups,
+where I can find them with C-x C-f (find-file) if I really need to.
+
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+#+END_SRC
+
 ** Speed-up startup
 Speed-up startup, taken from [[https://yiufung.net/post/pure-emacs-lisp-init-skeleton/][Pure Emacs-Lisp Init Skeleton]] 
 #+BEGIN_SRC emacs-lisp
@@ -112,22 +137,43 @@ Set priorities of packages. Higher values are searched first
 #+END_SRC
 
 ** Use-package
+Remeber to always use ~:ensure nil~ for internal packages, as described here
+[[https://github.com/jwiegley/use-package/issues/243][don't fail on using internal packages with use-package-always-ensure]]
 
 #+BEGIN_SRC emacs-lisp
+(setq-default use-package-always-ensure t ; Auto-download package if not exists
+              ;; use-package-always-defer t ; Always defer load package to speed up startup
+              use-package-verbose nil ; Don't report loading details
+              use-package-expand-minimally t  ; make the expanded code as minimal as possible
+              use-package-enable-imenu-support t) ; Let imenu finds use-package definitions
 
-  (setq-default use-package-always-ensure t ; Auto-download package if not exists
-                ;; use-package-always-defer t ; Always defer load package to speed up startup
-                use-package-verbose nil ; Don't report loading details
-                use-package-expand-minimally t  ; make the expanded code as minimal as possible
-                use-package-enable-imenu-support t) ; Let imenu finds use-package definitions
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
+;; to further reduce load-time
+(eval-when-compile
+  (require 'use-package))
+#+END_SRC
 
-  ;; to further reduce load-time
-  (eval-when-compile
-    (require 'use-package))
+Now, extend its functionality
+
+#+BEGIN_SRC emacs-lisp
+(use-package system-packages
+  :custom
+  (system-packages-noconfirm t))
+
+(use-package use-package-ensure-system-package)
+
+;; :diminish keyword
+(use-package diminish)
+
+;; :bind keyword
+(use-package bind-key)
+
+;; so we can (require 'use-package) even in compiled emacs to e.g. read docs
+(use-package use-package
+  :commands use-package-autoload-keymap)
 #+END_SRC
 
 ** Time tracking of initialization
@@ -156,17 +202,126 @@ string manipulation, and f for file manipulation.
 
 #+END_SRC
 
-* Initial settings
+* Global defaults
 Begin initialization
 #+BEGIN_SRC emacs-lisp
-;; Turn off mouse interface early in startup to avoid momentary display
-(when window-system
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-  (tooltip-mode -1))
+(use-package emacs
+  :init
+  (put 'narrow-to-region 'disabled nil)
+  (put 'downcase-region 'disabled nil)
+  :custom
+  (scroll-step 1)
+  (inhibit-startup-screen t "Don't show splash screen")
+  (use-dialog-box nil "Disable dialog boxes")
+  (x-gtk-use-system-tooltips nil)
+  (enable-recursive-minibuffers t "Allow minibuffer commands in the minibuffer")
+  (indent-tabs-mode nil "Spaces!")
+  (fset 'yes-or-no-p 'y-or-n-p)
+  (debug-on-quit nil)
+  (locale-coding-system 'utf-8)
+  )
+#+END_SRC
 
-(setq inhibit-startup-message t)
+Encoding system
+   #+BEGIN_SRC emacs-lisp
+(use-package mule
+  :ensure nil
+  :config
+  (prefer-coding-system 'utf-8)
+  (set-language-environment "UTF-8")
+  (set-terminal-coding-system 'utf-8)
+  (set-selection-coding-system 'utf-8)
+  (set-locale-environment "en_US.UTF-8"))
+#+END_SRC
+
+Parenthesis
+   #+BEGIN_SRC emacs-lisp
+(use-package paren
+  :ensure nil
+  :config (show-paren-mode))
+#+END_SRC
+
+* Interface
+** GUI
+Disable gui elements we don't need:
+#+BEGIN_SRC emacs-lisp
+(use-package tool-bar
+  :ensure nil
+  :config
+  (tool-bar-mode -1))
+
+(use-package scroll-bar
+  :ensure nil
+  :config
+  (scroll-bar-mode -1))
+
+(use-package menu-bar
+  :ensure nil
+  :config
+  (menu-bar-mode -1)
+  :bind
+  ([S-f10] . menu-bar-mode))
+
+(use-package tooltip
+  :ensure nil
+  :custom
+  (tooltip-mode -1))
+#+END_SRC
+
+Add those we want instead:
+#+BEGIN_SRC emacs-lisp
+(use-package time
+  :defer t
+  :custom
+  (display-time-default-load-average nil)
+  (display-time-24hr-format t)
+  :config
+  (display-time-mode t))
+#+END_SRC
+
+Fancy stuff
+   #+BEGIN_SRC emacs-lisp
+(use-package all-the-icons
+  :ensure t
+  :defer t
+  :config
+  (setq all-the-icons-mode-icon-alist
+        `(,@all-the-icons-mode-icon-alist
+          (package-menu-mode all-the-icons-octicon "package" :v-adjust 0.0)
+          (jabber-chat-mode all-the-icons-material "chat" :v-adjust 0.0)
+          (jabber-roster-mode all-the-icons-material "contacts" :v-adjust 0.0)
+          (telega-chat-mode all-the-icons-fileicon "telegram" :v-adjust 0.0
+                            :face all-the-icons-blue-alt)
+          (telega-root-mode all-the-icons-material "contacts" :v-adjust 0.0))))
+
+(use-package all-the-icons-dired
+  :ensure t
+  :hook
+  (dired-mode . all-the-icons-dired-mode))
+
+(use-package all-the-icons-ivy
+  :ensure t
+  :after ivy
+  :custom
+  (all-the-icons-ivy-buffer-commands '() "Don't use for buffers.")
+  :config
+  (all-the-icons-ivy-setup))
+
+(use-package doom-modeline
+  :ensure t
+  :hook
+  (after-init . doom-modeline-init)
+  :custom
+  (doom-modeline-major-mode-icon t)
+  (doom-modeline-buffer-file-name-style 'buffer-name)
+  (doom-modeline-icon t))
+#+END_SRC
+
+And the winner is…
+#+BEGIN_SRC emacs-lisp
+(use-package winner
+  :config
+  (winner-mode 1))
 #+END_SRC
 
 * Function definitions
@@ -296,55 +451,8 @@ Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bba
 (load-theme 'solarized-light t)
 #+END_SRC
 
-* Start-up options
-Ideas taken from various configs, especially from [[http://aaronbedra.com/emacs.d/][Aaron Bedra]]
-Some sane settings to begin Emacs.
-** General settings
-*** Custom file
-
-#+BEGIN_SRC emacs-lisp
-;; keep customize settings in their own file
-(setq custom-file "~/.emacs.d/custom.el")
-(when (file-exists-p custom-file)
-  (load custom-file))
-#+END_SRC
-
-*** UTF-8 encoding
-
-#+BEGIN_SRC emacs-lisp
-;; UTF-8 please
-(require 'iso-transl)
-(setq locale-coding-system 'utf-8) ; pretty
-(set-terminal-coding-system 'utf-8) ; pretty
-(setq default-terminal-coding-system 'utf-8-unix) ; pretty
-(set-selection-coding-system 'utf-8) ; please
-(prefer-coding-system 'utf-8) ; with sugar on top
-(setq-default indent-tabs-mode nil)
-(set-locale-environment "en_US.UTF-8")
-(set-default-coding-systems 'utf-8)
-(set-terminal-coding-system 'utf-8)
-
-#+END_SRC
-
-Automatically convert line endings to Unix
-From [[https://www.emacswiki.org/emacs/EndOfLineTips][EmacsWiki: End Of Line Tips]]
-
-#+BEGIN_SRC emacs-lisp :results silent
-(defun no-junk-please-were-unixish ()
-  (let ((coding-str (symbol-name buffer-file-coding-system)))
-    (when (string-match "-\\(?:dos\\|mac\\)$" coding-str)
-      (set-buffer-file-coding-system 'unix))))
- 
-(add-hook 'find-file-hooks 'no-junk-please-were-unixish)
-#+END_SRC
-
-*** Yes and no option
-#+BEGIN_SRC emacs-lisp
-;; Answering just 'y' or 'n' will do
-(defalias 'yes-or-no-p 'y-or-n-p)
-#+END_SRC
-
-*** Line wrapping
+* Text
+** Line wrapping
 #+BEGIN_SRC emacs-lisp
 (add-hook 'text-mode-hook 'auto-fill-mode)
 (add-hook 'prog-mode-hook 'auto-fill-mode)
@@ -355,82 +463,40 @@ From [[https://www.emacswiki.org/emacs/EndOfLineTips][EmacsWiki: End Of Line Tip
 
 #+END_SRC
 
-*** Package-initialize
-The idea was to use python from Anaconda distribution in emacs GUI.
-Taken from [[https://samrelton.wordpress.com/2013/09/26/emacs-and-anaconda-python/][Sam Relton's blog]]
-#+BEGIN_SRC emacs-lisp
-;; (defun set-exec-path-from-shell-PATH ()
-;;   (interactive)
-;;   (let ((path-from-shell (replace-regexp-in-string "^.*\n.*shell\n" "" (shell-command-to-string "$SHELL --login -i -c 'echo $PATH'"))))
-;;     (setenv "PATH" path-from-shell)
-;;     (setq exec-path (split-string path-from-shell path-separator))))
-
-;; (when-not-term
-;;  (set-exec-path-from-shell-PATH)
-;;  )
-
-#+END_SRC
-
-*** Backups
-This is one of the things people usually want to change right away.
-By default, Emacs saves backup files in the current directory. These
-are the files ending in ~ that are cluttering up your directory
-lists. The following code stashes them all in ~/.emacs.d/backups,
-where I can find them with C-x C-f (find-file) if I really need to.
+* Writing
+** Writegood mode
 
 #+BEGIN_SRC emacs-lisp
-(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+(use-package writegood-mode
+  :ensure t
+  :defer t
+  :config
+  (global-set-key "\C-cg" 'writegood-mode)
+)
 #+END_SRC
 
-*** Open-with
-Check this links:
-[[http://emacs.stackexchange.com/questions/3180/org-mode-cant-display-inline-images-when-openwith-mode-is-turned-on?rq=1][link1]]
-[[http://emacs.stackexchange.com/questions/5855/openwith-doesnt-work-in-dired][link2]]
-#+BEGIN_SRC emacs-lisp
-;;(when-not-term
-;;(openwith-mode -1)
-;;)
-#+END_SRC
-
-*** Dired
-
-Taken from this stack exchange [[http://emacs.stackexchange.com/questions/5603/how-to-quickly-copy-move-file-in-emacs-dired][link]] dired-dwim-target is a variable defined in
-`dired.el'. Its value is nil
-
-Documentation: If non-nil, Dired tries to guess a default target
-directory. This means: if there is a Dired buffer displayed in the next window,
-use its current directory, instead of this Dired buffer's current directory.
-
-The target is used in the prompt for file copy, rename etc.
+** Wordcount mode
 
 #+BEGIN_SRC emacs-lisp
-(setq dired-dwim-target t)
+(use-package wc-mode
+  :ensure t
+  :defer t
+  :config
+  (global-set-key "\C-cw" 'wc-mode)
+)
 #+END_SRC
 
-*** Info in modeline
+** org-wc
 
 #+BEGIN_SRC emacs-lisp
-(show-paren-mode t)
-(size-indication-mode 1)
-(column-number-mode t)
-#+END_SRC
-
-* EMMS
-Need to look into this in the future
-Load EMMS into emacs
-#+BEGIN_SRC emacs-lisp
-;;(require 'emms-setup)
-;;(emms-all)
-;;(emms-default-players)
-#+END_SRC
-
-Set music folder
-#+BEGIN_SRC emacs-lisp :results silent
-;;(setq emms-source-file-default-directory "~/Music/")
+(use-package org-wc
+  :ensure t
+  :defer t
+  :config
+)
 #+END_SRC
 
 * Ivy 
-
 Great explanation from [[https://sam217pa.github.io/2016/09/13/from-helm-to-ivy/][here]]
 
 #+BEGIN_SRC emacs-lisp
@@ -896,25 +962,6 @@ Add this to fix could not find ditaa.jar
 * Yasnippet
 
 #+BEGIN_SRC emacs-lisp
-
-;; ;;(yas-reload-all)
-;; (add-hook 'prog-mode-hook #'yas-minor-mode)
-;; (add-hook 'text-mode-hook #'yas-minor-mode)
-
-;; Remove Yasnippet's default tab key binding
-;;(define-key yas-minor-mode-map (kbd "<tab>") nil)
-;;(define-key yas-minor-mode-map (kbd "TAB") nil)
-;; Set Yasnippet's key binding to shift+tab
-;;(define-key yas-minor-mode-map (kbd "<backtab>") 'yas-expand)
-;; Alternatively use Control-c + tab
-;;(define-key yas-minor-mode-map (kbd "\C-c TAB") 'yas-expand)
-
-;; (eval-after-load 'yasnippet
-;;   '(progn
-;;      (define-key yas-keymap (kbd "TAB") nil)
-;;      (define-key yas-keymap (kbd "C-o") 'yas-next-field-or-maybe-expand)
-;; ))
-
 (use-package yasnippet
   :ensure t
   :diminish yas-minor-mode
@@ -946,32 +993,6 @@ Add this to fix could not find ditaa.jar
         ledger-clear-whole-transactions t)
   (use-package flycheck-ledger
     :ensure t ))
-
-#+END_SRC
-
-* Prodigy
-#+BEGIN_SRC emacs-lisp :results silent
-(use-package prodigy
-  :ensure t
-  :config
-  (prodigy-define-service
-    :name "nikola"
-    :command "nikola"
-    :args '("auto")
-    :cwd "/home/carlosperez/Documents/gh/blog"
-    :tags '(blog nikola)
-    :stop-signal 'sigint
-    :kill-process-buffer-on-stop: t
-    ))
-
-#+END_SRC
-
-
-#+BEGIN_SRC emacs-lisp
-(defun nikola-deploy () ""
-       (interactive)
-       (venv-with-virtualenv "nikolablog" (shell-command "cd /home/carlosperez/Documents/gh/blog; nikola github_deploy"))
-       )
 
 #+END_SRC
 
@@ -1214,39 +1235,6 @@ My CV configuration
 #+END_SRC
 
 This package allows to have a single org file and different export options.
-
-* Writing
-** Writegood mode
-
-#+BEGIN_SRC emacs-lisp
-(use-package writegood-mode
-  :ensure t
-  :defer t
-  :config
-  (global-set-key "\C-cg" 'writegood-mode)
-)
-#+END_SRC
-
-** Wordcount mode
-
-#+BEGIN_SRC emacs-lisp
-(use-package wc-mode
-  :ensure t
-  :defer t
-  :config
-  (global-set-key "\C-cw" 'wc-mode)
-)
-#+END_SRC
-
-** org-wc
-
-#+BEGIN_SRC emacs-lisp
-(use-package org-wc
-  :ensure t
-  :defer t
-  :config
-)
-#+END_SRC
 
 * Hydra
 #+BEGIN_SRC emacs-lisp
