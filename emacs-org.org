@@ -17,11 +17,31 @@ package.
 
 Before you can build this on a new system, make sure that you put the cursor
 over any of these properties, and hit: =C-c C-c=
+
+** Value of org-structure-template-alist
+In Org 9.2, there is a new implementation of this. Unfortunately, in my case,
+it keeps telling me the following
+
+
+#+begin_comment
+The following entries must be updated:
+
+(("n" "#+BEGIN_NOTES\n?\n#+END_NOTES"))
+#+end_comment
+
+Therefore, I will need to update it with this as a workaround, until I find a
+better solution
+
+#+BEGIN_SRC emacs-lisp
+(pop org-structure-template-alist)
+#+END_SRC
+
 * General look
 ** Theme
 Adapted from [[https://github.com/mwfogleman/.emacs.d/blob/master/michael.org][mwfogleman/.emacs.d · GitHub]]
 The theming is derived from [[https://lepisma.github.io/2017/10/28/ricing-org-mode/][Ricing up Org Mode]]
 Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-org-mode-in-emacs/][Beautifying Org Mode in Emacs]]
+
 #+BEGIN_SRC emacs-lisp :results silent
   (use-package org
     :ensure t

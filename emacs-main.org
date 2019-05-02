@@ -219,7 +219,6 @@ Begin initialization
   (x-gtk-use-system-tooltips nil)
   (enable-recursive-minibuffers t "Allow minibuffer commands in the minibuffer")
   (indent-tabs-mode nil "Spaces!")
-  (fset 'yes-or-no-p 'y-or-n-p)
   (debug-on-quit nil)
   (locale-coding-system 'utf-8)
   )
