@@ -23,6 +23,7 @@ Other useful configs:
  - [[https://github.com/a13/emacs.d][GitHub - a13/emacs.d]]
  - [[https://github.com/skeeto/.emacs.d/blob/master/init.el][.emacs.d/init.el at master · skeeto/.emacs.d · GitHub]]
  - [[http://aaronbedra.com/emacs.d/][Aaron Bedra]]
+ - [[https://github.com/dakra/dmacs][GitHub - dakra/dmacs: Emacs Literate Configuration with borg]]
 
 To "load" the contents of this file, add the following to =$HOME/.init.el=:
 
