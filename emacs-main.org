@@ -210,6 +210,8 @@ Begin initialization
   :init
   (put 'narrow-to-region 'disabled nil)
   (put 'downcase-region 'disabled nil)
+  :config
+  (fset 'yes-or-no-p 'y-or-n-p)
   :custom
   (scroll-step 1)
   (inhibit-startup-screen t "Don't show splash screen")
