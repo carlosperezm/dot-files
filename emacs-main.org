@@ -454,6 +454,14 @@ Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bba
 (load-theme 'solarized-light t)
 #+END_SRC
 
+** Mixed pitch
+#+BEGIN_SRC emacs-lisp
+(use-package mixed-pitch
+  :hook
+  ;; If you want it in all text modes:
+  (text-mode . mixed-pitch-mode))
+#+END_SRC
+
 * Text
 ** Line wrapping
 #+BEGIN_SRC emacs-lisp
