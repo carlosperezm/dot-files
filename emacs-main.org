@@ -425,28 +425,36 @@ All this configuration is taken from [[https://www.greghendershott.com/2017/02/e
 Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bbatsov's solarized themes]].
 
 #+begin_src emacs-lisp
-(use-package solarized-theme
-  :ensure t
-  :defer t
-  :init
-  ;; (defun cp/solarized-theme-hook ()
-  ;;   (set-face-attribute 'font-lock-constant-face nil :weight 'normal)
-  ;;   (set-face-attribute 'font-lock-function-name-face nil :weight 'bold))
-  
-  ;; (cp/add-theme-hook 'solarized-dark  #'cp/solarized-theme-hook)
-  ;; (cp/add-theme-hook 'solarized-light #'cp/solarized-theme-hook)
-  :config
-  (setq solarized-use-variable-pitch nil
-        solarized-use-less-bold t
-        solarized-use-more-italic nil
-        solarized-distinct-doc-face t
-        solarized-high-contrast-mode-line t
-        ;; I find different font sizes irritating.
-        solarized-height-minus-1 1.0
-        solarized-height-plus-1 1.0
-        solarized-height-plus-2 1.0
-        solarized-height-plus-3 1.0
-        solarized-height-plus-4 1.0))
+  (use-package solarized-theme
+    :ensure t
+    :defer t
+    ;; :after (org)
+    :init
+    (defun cp/solarized-theme-hook ()
+      ;; (require 'color)
+      ;; (set-face-attribute 'org-block nil :background
+      ;;                     (color-darken-name
+      ;;                      (face-attribute 'default :background) 5))
+      ;; (set-face-attribute 'font-lock-constant-face nil :weight 'normal)
+      ;; (set-face-attribute 'font-lock-function-name-face nil :weight 'bold))
+      )
+
+    ;; (cp/add-theme-hook 'solarized-dark  #'cp/solarized-theme-hook)
+    ;; (cp/add-theme-hook 'solarized-light #'cp/solarized-theme-hook)
+    :config
+    (setq solarized-use-variable-pitch nil
+          solarized-use-less-bold t
+          solarized-use-more-italic nil
+          solarized-distinct-doc-face t
+          solarized-high-contrast-mode-line t
+          ;; I find different font sizes irritating.
+          solarized-height-minus-1 1.0
+          solarized-height-plus-1 1.0
+          solarized-height-plus-2 1.0
+          solarized-height-plus-3 1.0
+          solarized-height-plus-4 1.0)    
+    )
+
 #+end_src
 
 ** Smart mode line 
