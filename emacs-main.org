@@ -486,15 +486,77 @@ Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bba
 #+END_SRC
 
 * Text
+** Visual fill column
+A small Emacs minor mode that mimics the effect of fill-column in
+visual-line-mode. Instead of wrapping lines at the window edge, which is the
+standard behaviour of visual-line-mode, it wraps lines at fill-column. If
+fill-column is too large for the window, the text is wrapped at the window
+edge.
+
+#+BEGIN_SRC emacs-lisp
+(use-package visual-fill-column
+  :defer t
+  :hook visual-line-mode
+  )
+#+END_SRC
+
 ** Line wrapping
 #+BEGIN_SRC emacs-lisp
-(add-hook 'text-mode-hook 'auto-fill-mode)
-(add-hook 'prog-mode-hook 'auto-fill-mode)
+(use-package fill
+  :ensure nil
+  :commands turn-on-auto-fill
+  :bind (("C-c T f" . auto-fill-mode)
+         ("C-c T t" . toggle-truncate-lines))
+  :custom
+  (fill-column 79)
+  :init
+  (add-hook 'org-mode-hook 'turn-on-auto-fill)
+  (add-hook 'prog-mode-hook 'turn-on-auto-fill)
+  :diminish auto-fill-mode)
+#+END_SRC
 
-;; set column width to 79 and visual line mode
-(setq-default fill-column 79)
-(global-visual-line-mode 1)
+** Unfill paragraph
+Taken from [[https://www.emacswiki.org/emacs/UnfillParagraph][EmacsWiki: Unfill Paragraph]]
 
+#+BEGIN_SRC emacs-lisp
+(defun unfill-paragraph (&optional region)
+  "Takes a multi-line paragraph and makes it into a single line of text."
+  (interactive (progn (barf-if-buffer-read-only) '(t)))
+  (let ((fill-column (point-max))
+        ;; This would override `fill-column' if it's an integer.
+        (emacs-lisp-docstring-fill-column t))
+    (fill-paragraph nil region)))
+
+;; Handy key definition
+(define-key global-map "\M-Q" 'unfill-paragraph)
+
+#+END_SRC
+
+** Visual line
+
+#+BEGIN_SRC emacs-lisp
+(use-package text-mode
+  :ensure nil
+  :hook turn-on-visual-line-mode
+)
+#+END_SRC
+
+** Smartparens
+
+#+BEGIN_SRC emacs-lisp
+(use-package smartparens
+  :ensure t
+  :defer 1
+  :hook ((
+          emacs-lisp-mode lisp-mode hy-mode go-mode cc-mode python-mode
+                          typescript-mode javascript-mode java-mode)
+         . smartparens-strict-mode)
+  :config
+  (require 'smartparens-config)
+  (smartparens-global-mode 1)
+  :custom
+  (sp-show-pair-from-inside nil)
+  :diminish smartparens-mode)
 #+END_SRC
 
 * Writing
