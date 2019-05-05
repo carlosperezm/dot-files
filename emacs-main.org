@@ -592,6 +592,17 @@ Taken from [[https://www.emacswiki.org/emacs/UnfillParagraph][EmacsWiki: Unfill 
 )
 #+END_SRC
 
+** Writeroom-mode
+A minor mode for Emacs that implements a distraction-free writing mode similar
+to the famous Writeroom editor for OS X.
+
+#+BEGIN_SRC emacs-lisp
+(use-package writeroom-mode
+  :defer t
+  :after visual-fill-column
+  )
+#+END_SRC
+
 * Ivy 
 Great explanation from [[https://sam217pa.github.io/2016/09/13/from-helm-to-ivy/][here]]
 
