@@ -368,6 +368,7 @@ And the winner is…
 
 * Theme
 All this configuration is taken from [[https://www.greghendershott.com/2017/02/emacs-themes.html][Emacs Themes]]
+Use ~counsel-load-theme~ to change between them.
 ** Advice and hooks
 #+BEGIN_SRC emacs-lisp
 ;;; Theme hooks
