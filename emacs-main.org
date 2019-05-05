@@ -1224,6 +1224,13 @@ Emacs package.
 #+END_SRC
 
 * Programming languages
+** Emacs Lisp
+#+BEGIN_SRC emacs-lisp
+(use-package lisp
+  :ensure nil
+  :hook
+  (after-save . check-parens))
+#+END_SRC
 ** Python
 Some configurations for elpy mode taken from [[https://github.com/jorgenschaefer/elpy/wiki/Configuration][here]]
 Also from [[https://github.com/zamansky/using-emacs/blob/master/myinit.org][CestlaZ]]
