@@ -727,7 +727,8 @@ completion candidates.
  #+BEGIN_SRC emacs-lisp
 
 (use-package tex
-:ensure auctex)
+  :ensure auctex
+  :hook turn-on-flyspell)
 
 ;;View LaTex compiled pdf in emacs
 (setq TeX-view-program-list '(("Emacs" "emacsclient %o")))
