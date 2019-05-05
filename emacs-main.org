@@ -482,7 +482,7 @@ Here's some configuration for [[https://github.com/bbatsov/solarized-emacs/][bba
 (use-package mixed-pitch
   :hook
   ;; If you want it in all text modes:
-  (text-mode . mixed-pitch-mode))
+  (org-mode . mixed-pitch-mode))
 #+END_SRC
 
 * Text
