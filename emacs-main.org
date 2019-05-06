@@ -906,6 +906,13 @@ Emacs package.
 )
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package ssh-agency
+  :config
+  (setenv "SSH_ASKPASS" "git-gui--askpass"))
+#+END_SRC
+
+
 * Projectile
 
 #+BEGIN_SRC emacs-lisp
