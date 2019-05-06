@@ -104,7 +104,7 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
     (org-special-ctrl-k t)
     (org-yank-adjusted-subtrees t)
     ;; Theming
-    (org-ellipsis "  ") ;; folding symbol
+    (org-ellipsis " ▼ ") ;; folding symbol
     (org-pretty-entities t)
     (org-hide-emphasis-markers t) ;; show actually italicized text instead of /italicized text/
     (org-agenda-block-separator "")
@@ -231,24 +231,24 @@ Add support for ~minted~ package to have a pretty \LaTeX output for source code
 blocks
 
 #+BEGIN_SRC emacs-lisp :results silent
-;;Minted
-(setq org-latex-listings 'minted
-      org-latex-packages-alist '(("" "minted"))
-      org-latex-pdf-process
-      '("pdflatex -shell-escape -interaction nonstopmode -synctex=1 -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -synctex=1 -output-directory %o %f"))
+  ;;Minted
+  (setq org-latex-listings 'minted
+        org-latex-packages-alist '(("" "minted"))
+        org-latex-pdf-process
+        '("pdflatex -shell-escape -interaction nonstopmode -synctex=1 -output-directory %o %f"
+          "pdflatex -shell-escape -interaction nonstopmode -synctex=1 -output-directory %o %f"))
 
-(add-to-list 'org-latex-packages-alist
-             '("" "tikz" t))
+  (add-to-list 'org-latex-packages-alist
+               '("" "tikz" t))
 
-(eval-after-load "preview"
-  '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
+  (eval-after-load "preview"
+    '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{tikzpicture}" t))
 
-(setq org-latex-create-formula-image-program 'imagemagick)
+  (setq org-latex-create-formula-image-program 'imagemagick)
 
-(require 'ox-latex)
-(add-to-list 'org-latex-packages-alist '("cache=false" "minted" nil))
-(add-to-list 'org-latex-minted-langs '(ipython "python"))
+  (require 'ox-latex)
+  (add-to-list 'org-latex-packages-alist '("cache=false" "minted" nil))
+  ;; (add-to-list 'org-latex-minted-langs '(ipython "python"))
 
 #+END_SRC
 
@@ -475,51 +475,51 @@ This capture automatically inserts an entry into today's journal file.
 ** General configuration
 You can add more languages with (language . t)
 #+begin_src emacs-lisp :results silent
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t)
-   (ipython . t)
-   (C . t)
-   (calc . t)
-   (latex . t)
-   (emacs-lisp . t)
-   (shell . t)
-   (R . t)
-   (ledger . t)
-   (js         . t)
-   (perl       . t)
-   (clojure    . t)
-   (ruby       . t)
-   (dot        . t)
-   (css        . t)
-   (plantuml   . t)
-   (ditaa      . t)
-   ))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)
+     ;; (ipython . t)
+     (C . t)
+     (calc . t)
+     (latex . t)
+     (emacs-lisp . t)
+     (shell . t)
+     (R . t)
+     (ledger . t)
+     (js         . t)
+     (perl       . t)
+     (clojure    . t)
+     (ruby       . t)
+     (dot        . t)
+     (css        . t)
+     (plantuml   . t)
+     (ditaa      . t)
+     ))
 
-(defun my-org-confirm-babel-evaluate (lang body)
-  "Do not confirm evaluation for these languages."
-  (not (or (string= lang "C")
-           (string= lang "python")
-           (string= lang "emacs-lisp")
-           (string= lang "latex")
-           (string= lang "ipython")
-           (string= lang "sh")
-           (string= lang "bash")
-           (string= lang "R")
-           (string= lang "ledger")
-           (string= lang "dot")
-           (string= lang "plantuml")
-           (string= lang "ditaa")
-           )))
-(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+  (defun my-org-confirm-babel-evaluate (lang body)
+    "Do not confirm evaluation for these languages."
+    (not (or (string= lang "C")
+             (string= lang "python")
+             (string= lang "emacs-lisp")
+             (string= lang "latex")
+             ;; (string= lang "ipython")
+             (string= lang "sh")
+             (string= lang "bash")
+             (string= lang "R")
+             (string= lang "ledger")
+             (string= lang "dot")
+             (string= lang "plantuml")
+             (string= lang "ditaa")
+             )))
+  (setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
 
-;; use ob-async
+  ;; use ob-async
 
-(use-package ob-async
-  :ensure t
-  :config
-  ;; (add-to-list 'org-ctrl-c-ctrl-c-hook 'ob-async-org-babel-execute-src-block)
-  )
+  (use-package ob-async
+    :ensure t
+    :config
+    ;; (add-to-list 'org-ctrl-c-ctrl-c-hook 'ob-async-org-babel-execute-src-block)
+    )
 #+end_src
 
 ** Source blocks
@@ -552,13 +552,16 @@ Add this to fix could not find ditaa.jar
 *** Ob-ipython
 
 #+BEGIN_SRC emacs-lisp
-(use-package ob-ipython
-  :ensure t
-  :init
-)
+  ;; (use-package ob-ipython
+  ;;   :ensure t
+  ;;   :init
+  ;; )
 #+END_SRC
 
 * GTD
+:PROPERTIES:
+:header-args:emacs-lisp:     :tangle no
+:END:
 ** Introduction
 This system will I will implement a GTD system mainly based on [[http://www.howardism.org/Technical/Emacs/getting-boxes-done.html][Getting Boxes
 Done]] by Howard Abrams. I think it is maybe the first explanation that really

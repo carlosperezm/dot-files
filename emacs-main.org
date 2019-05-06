@@ -351,8 +351,8 @@ And the winner is…
 #+BEGIN_SRC emacs-lisp
 (defun my/tangle-dotfiles ()
   "If the current file is in '~/dot-files', the code blocks are tangled"
-  (when (equal (file-name-directory (directory-file-name buffer-file-name))
-               (concat (getenv "HOME") "/dot-files/"))
+  (when (equal (expand-file-name (file-name-directory (directory-file-name buffer-file-name)))
+               (expand-file-name (concat (getenv "HOME") "/dot-files/")))
     (org-babel-tangle)
     (message "%s tangled" buffer-file-name)))
 
@@ -605,6 +605,10 @@ to the famous Writeroom editor for OS X.
 #+END_SRC
 
 ** Spell checking
+:PROPERTIES:
+:header-args:emacs-lisp:     :tangle no
+:END:
+
 *** Flyspell
 Spell checking with FlySpell, which uses the built-in settings of Ispell. In
 his case, it is configured to use Aspell, which requires you to download it in
@@ -628,14 +632,15 @@ Check this for future tweaks: [[https://www.emacswiki.org/emacs/FlySpell][EmacsW
   ;;   (add-hook hook (lambda () (flyspell-mode -1))))
 
   :config
-  (setq ispell-program-name "/usr/bin/aspell"
-        ispell-local-dictionary "en_US"
-        ispell-dictionary "american" ; better for aspell
-        ispell-extra-args '("--sug-mode=ultra" "--lang=en_US")
-        ispell-list-command "--list"
-        ispell-local-dictionary-alist '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "['‘’]"
-                                      t ; Many other characters
-                                      ("-d" "en_US") nil utf-8))))
+  (setq 
+   ;; ispell-program-name "c:/msys64/mingw64/bin/aspell.exe"
+   ispell-local-dictionary "en_US"
+   ;; ispell-dictionary "american" ; better for aspell
+   ispell-extra-args '("--sug-mode=ultra" "--lang=en_US")
+   ispell-list-command "--list"
+   ispell-local-dictionary-alist '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "['‘’]"
+                                    t ; Many other characters
+                                    ("-d" "en_US") nil utf-8))))
 #+END_SRC
 
 *** Flyspell correct
@@ -715,10 +720,11 @@ completion candidates.
 [[http://company-mode.github.io/][official page]]
 
 #+BEGIN_SRC emacs-lisp
-(use-package company
-  :ensure t
-  :config (add-hook 'after-init-hook 'global-company-mode)
-  (add-to-list 'company-backends 'company-ob-ipython))
+  (use-package company
+    :ensure t
+    :config (add-hook 'after-init-hook 'global-company-mode)
+    ;; (add-to-list 'company-backends 'company-ob-ipython)
+    )
 #+END_SRC
 
 #+RESULTS:
@@ -727,60 +733,64 @@ completion candidates.
 * Auctex
  #+BEGIN_SRC emacs-lisp
 
-(use-package tex
-  :ensure auctex
-  :hook turn-on-flyspell)
+   (use-package tex
+     :ensure auctex
+     :hook turn-on-flyspell)
 
-;;View LaTex compiled pdf in emacs
-(setq TeX-view-program-list '(("Emacs" "emacsclient %o")))
-(setq TeX-view-program-selection '((output-pdf "Emacs")))
+   ;;View LaTex compiled pdf in emacs
+   (setq TeX-view-program-list '(("Emacs" "emacsclient %o")))
+   (setq TeX-view-program-selection '((output-pdf "Emacs")))
 
-;;correlate SyncTeX
-(server-start)
-(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode)
-(add-hook 'LaTeX-mode-hook 'TeX-source-correlate-mode)
-(setq TeX-source-correlate-method 'synctex)
-(setq TeX-source-correlate-start-server t)
+   ;;correlate SyncTeX
+   ;; (server-start)
+   ;; (add-hook 'LaTeX-mode-hook 'TeX-PDF-mode)
+   ;; (add-hook 'LaTeX-mode-hook 'TeX-source-correlate-mode)
+   ;; (setq TeX-source-correlate-method 'synctex)
+   ;; (setq TeX-source-correlate-start-server t)
 
-;;latexMk
-(require 'auctex-latexmk)
-(auctex-latexmk-setup) 
+   ;;latexMk
+   ;;(require 'auctex-latexmk)
+   ;;(auctex-latexmk-setup) 
 
-;;CDLaTeX
-(add-hook 'LaTeX-mode-hook 'turn-on-cdlatex) ;with AUCTeX LaTeX mode
+   ;;CDLaTeX
+   ;;(add-hook 'LaTeX-mode-hook 'turn-on-cdlatex) ;with AUCTeX LaTeX mode
 
 
-;;reftex
-;; Turn on RefTeX in AUCTeX
-(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-;; Activate nice interface between RefTeX and AUCTeX
-(setq reftex-plug-into-AUCTeX t)
+   ;;reftex
+   ;; Turn on RefTeX in AUCTeX
+   ;;(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+   ;; Activate nice interface between RefTeX and AUCTeX
+   ;;(setq reftex-plug-into-AUCTeX t)
  #+END_SRC
 
 * Pdf Tools
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+
 #+BEGIN_SRC emacs-lisp :results silent
 
-  (use-package pdf-tools
-    :ensure t
-    :pin manual ;; manually update
-    :config
-    ;; initialise
-    (pdf-tools-install)
-    ;; open pdfs scaled to fit page
-    (setq-default pdf-view-display-size 'fit-page)
-     ;; use normal isearch
-    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
-    ;; more fine-grained zooming
-    (setq pdf-view-resize-factor 1.1)
+  ;; (use-package pdf-tools
+  ;;   :ensure t
+  ;;   :pin manual ;; manually update
+  ;;   :config
+  ;;   ;; initialise
+  ;;   (pdf-tools-install)
+  ;;   ;; open pdfs scaled to fit page
+  ;;   (setq-default pdf-view-display-size 'fit-page)
+  ;;    ;; use normal isearch
+  ;;   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+  ;;   ;; more fine-grained zooming
+  ;;   (setq pdf-view-resize-factor 1.1)
 
-    ;; keyboard shortcuts
-    (define-key pdf-view-mode-map (kbd "h") 'pdf-annot-add-highlight-markup-annotation)
-    (define-key pdf-view-mode-map (kbd "t") 'pdf-annot-add-text-annotation)
-    (define-key pdf-view-mode-map (kbd "D") 'pdf-annot-delete))
+  ;;   ;; keyboard shortcuts
+  ;;   (define-key pdf-view-mode-map (kbd "h") 'pdf-annot-add-highlight-markup-annotation)
+  ;;   (define-key pdf-view-mode-map (kbd "t") 'pdf-annot-add-text-annotation)
+  ;;   (define-key pdf-view-mode-map (kbd "D") 'pdf-annot-delete))
 
 
-  (use-package org-pdfview
-    :ensure t)
+  ;; (use-package org-pdfview
+  ;;   :ensure t)
 
 #+END_SRC
 
@@ -791,6 +801,33 @@ completion candidates.
   :ensure t
   :config
   )
+
+#+END_SRC
+
+* Hydra
+#+BEGIN_SRC emacs-lisp
+(use-package hydra
+  :config
+  (setq hydra-lv nil))
+
+#+END_SRC
+
+A zooming hydra
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-zoom ()
+  "zoom"
+  ("+" text-scale-increase "in")
+  ("=" text-scale-increase "in")
+  ("-" text-scale-decrease "out")
+  ("_" text-scale-decrease "out")
+  ("0" (text-scale-adjust 0) "reset")
+  ("q" nil "quit" :color blue))
+
+(bind-keys ("C-x C-0" . hydra-zoom/body)
+           ("C-x C-=" . hydra-zoom/body)
+           ("C-x C--" . hydra-zoom/body)
+           ("C-x C-+" . hydra-zoom/body))
 
 #+END_SRC
 
@@ -1012,11 +1049,11 @@ Use company mode with bash
   (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode)))
 
 
-(require 'company-irony-c-headers)
+;; (require 'company-irony-c-headers)
 ;; Load with `irony-mode` as a grouped backend
-(eval-after-load 'company
-  '(add-to-list
-    'company-backends '(company-irony-c-headers company-irony)))
+;; (eval-after-load 'company
+;;   '(add-to-list
+;;     'company-backends '(company-irony-c-headers company-irony)))
 
 (use-package clang-format
   :ensure t
@@ -1067,6 +1104,10 @@ Last modified function taken from here:
 #+END_SRC
 
 ** emacs-easy-hugo
+:PROPERTIES:
+:header-args:emacs-lisp:     :tangle no
+:END:
+
 #+BEGIN_SRC emacs-lisp
 (use-package easy-hugo
   :ensure t
@@ -1087,6 +1128,10 @@ Last modified function taken from here:
 ** Capture setup
 
 * CV
+:PROPERTIES:
+:header-args:emacs-lisp:     :tangle no
+:END:
+
 My CV configuration
 #+BEGIN_SRC emacs-lisp :results silent
 (use-package ox-moderncv
@@ -1095,33 +1140,6 @@ My CV configuration
 #+END_SRC
 
 This package allows to have a single org file and different export options.
-
-* Hydra
-#+BEGIN_SRC emacs-lisp
-(use-package hydra
-  :config
-  (setq hydra-lv nil))
-
-#+END_SRC
-
-A zooming hydra
-
-#+BEGIN_SRC emacs-lisp
-(defhydra hydra-zoom ()
-  "zoom"
-  ("+" text-scale-increase "in")
-  ("=" text-scale-increase "in")
-  ("-" text-scale-decrease "out")
-  ("_" text-scale-decrease "out")
-  ("0" (text-scale-adjust 0) "reset")
-  ("q" nil "quit" :color blue))
-
-(bind-keys ("C-x C-0" . hydra-zoom/body)
-           ("C-x C-=" . hydra-zoom/body)
-           ("C-x C--" . hydra-zoom/body)
-           ("C-x C-+" . hydra-zoom/body))
-
-#+END_SRC
 
 * Auto-insert
    #+BEGIN_SRC emacs-lisp
