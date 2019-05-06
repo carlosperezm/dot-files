@@ -621,11 +621,11 @@ Check this for future tweaks: [[https://www.emacswiki.org/emacs/FlySpell][EmacsW
   :init
   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
 
-  (dolist (hook '(text-mode-hook org-mode-hook))
-    (add-hook hook (lambda () (flyspell-mode 0))))
+  ;; (dolist (hook '(text-mode-hook org-mode-hook))
+  ;;   (add-hook hook (lambda () (flyspell-mode 0))))
 
-  (dolist (hook '(change-log-mode-hook log-edit-mode-hook org-agenda-mode-hook))
-    (add-hook hook (lambda () (flyspell-mode -1))))
+  ;; (dolist (hook '(change-log-mode-hook log-edit-mode-hook org-agenda-mode-hook))
+  ;;   (add-hook hook (lambda () (flyspell-mode -1))))
 
   :config
   (setq ispell-program-name "/usr/bin/aspell"
