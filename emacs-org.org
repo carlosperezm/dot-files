@@ -52,8 +52,8 @@ Use this also as a reference for fonts: [[https://zzamboni.org/post/beautifying-
 
     :custom-face
     (variable-pitch ((t (:family "ETBembo" :height 1.1))))
-    (fixed-pitch ((t ( :family "UbuntuMono" :slant normal :weight normal
-                               :height 0.9 :width normal))))
+    (fixed-pitch ((t ( :family "Ubuntu Mono" :slant normal :weight normal
+                               :height 1.0 :width normal))))
     (org-indent ((t (:inherit (org-hide fixed-pitch)))))
 
     ;; (require 'color)

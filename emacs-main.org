@@ -212,6 +212,7 @@ Begin initialization
   (put 'downcase-region 'disabled nil)
   :config
   (fset 'yes-or-no-p 'y-or-n-p)
+  (set-frame-font "-outline-Ubuntu Mono-normal-normal-normal-mono-15-*-*-*-c-*-iso8859-1")
   :custom
   (scroll-step 1)
   (inhibit-startup-screen t "Don't show splash screen")
@@ -360,6 +361,7 @@ And the winner is…
 #+END_SRC
 
 ** Disable all themes
+
 #+BEGIN_SRC emacs-lisp
 (defun cp/disable-all-themes ()
   (interactive)
